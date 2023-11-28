@@ -25,5 +25,6 @@ ___
 ### Изменить адрес для доступа к Postgres в application.properies.
 ## Email
 ### Поменять почту с которой будет рассылка в application.properies
+___
 #Swagger OpenAPI
 http://localhost:8080/swagger-ui/index.html#
