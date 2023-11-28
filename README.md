@@ -16,8 +16,8 @@
 #### есть возможность просматривать друзей другого пользователя :white_check_mark:
 #### возможность скрывать свой список друзей. :white_check_mark:
 #### использование базы данных (PostgreSQL) для хранения данных; :white_check_mark:
-#### написание тестов. :white_check_mark:
-#### документирование запросов через Swagger; 
+#### документирование запросов через Swagger; :white_check_mark:
+#### написание тестов. 
 #### обмен и просмотр сообщений реализован с помощью веб-сокетов. 
 ___
 # Usage
@@ -25,6 +25,5 @@ ___
 ### Изменить адрес для доступа к Postgres в application.properies.
 ## Email
 ### Поменять почту с которой будет рассылка в application.properies
-
-
-
+#Swagger OpenAPI
+http://localhost:8080/swagger-ui/index.html#
