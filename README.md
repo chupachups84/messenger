@@ -26,5 +26,5 @@ ___
 ## Email
 ### Поменять почту с которой будет рассылка в application.properies
 ___
-#Swagger OpenAPI
+# Swagger OpenAPI
 http://localhost:8080/swagger-ui/index.html#
