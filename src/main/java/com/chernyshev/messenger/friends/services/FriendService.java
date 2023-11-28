@@ -21,7 +21,7 @@ public class FriendService {
         return friendRepository.existsByUserAndFriend(user,friend)&& friendRepository.existsByUserAndFriend(friend,user);
     }
 
-    public void sendFriendRequest(String name, Long friendId) throws IllegalStateException {
+    public void sendFriendRequest(String name, Long friendId) {
         var user = userRepository.findByUsername(name).orElseThrow();
         var friend = userRepository.findById(friendId).orElse(null);
         if(friend==null||!friend.isActive()) throw new IllegalStateException("Пользователь не найден");
@@ -36,7 +36,7 @@ public class FriendService {
         List<FriendEntity> userFriends = friendRepository.findAllByUser(user);
         return getFilteredFriendshipResponses(user, userFriends);
     }
-    public List<FriendResponse> getUserFriends(Long userId,String username ) throws FriendshipException,IllegalStateException {
+    public List<FriendResponse> getUserFriends(Long userId,String username ){
         var friend = userRepository.findById(userId).orElse(null);
         if(friend==null|| !friend.isActive()) throw new IllegalStateException("Пользователь не найден");
         var user = userRepository.findByUsername(username).orElseThrow();
@@ -61,7 +61,7 @@ public class FriendService {
                 .collect(Collectors.toList());
     }
 
-    public void deleteFriend(String name, Long id) throws IllegalStateException{
+    public void deleteFriend(String name, Long id) {
         var user1 = userRepository.findByUsername(name).orElseThrow();
         var user2 = userRepository.findById(id).orElse(null);
         if(user2==null||!user2.isActive()) throw new IllegalStateException("Пользователь не найден");

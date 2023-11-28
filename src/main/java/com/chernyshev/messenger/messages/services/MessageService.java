@@ -19,7 +19,7 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final FriendService friendService;
-    public MessageResponse sendMessage(String senderName, Long receiverId, String text) throws FriendshipException,IllegalStateException {
+    public MessageResponse sendMessage(String senderName, Long receiverId, String text)  {
         UserEntity sender = userRepository.findByUsername(senderName).orElseThrow();
         UserEntity receiver = userRepository.findById(receiverId).orElse(null);
         if(receiver==null||!receiver.isActive()) throw new IllegalStateException("Пользователь не найден");
@@ -38,7 +38,7 @@ public class MessageService {
                 .text(message.getText())
                 .build();
     }
-    public List<MessageResponse> getMessageHistory(String senderName, Long receiverId) throws IllegalStateException{
+    public List<MessageResponse> getMessageHistory(String senderName, Long receiverId) {
         UserEntity sender = userRepository.findByUsername(senderName).orElseThrow();
         UserEntity receiver = userRepository.findById(receiverId).orElse(null);
         if(receiver==null||!receiver.isActive()) throw new IllegalStateException("Пользователь не найден");

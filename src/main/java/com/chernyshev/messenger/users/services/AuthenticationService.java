@@ -36,7 +36,7 @@ public class AuthenticationService {
     private final EmailService emailService;
     private final TokenUtils tokenUtils;
     private final TokenRepository tokenRepository;
-    public TokensResponse register(RegisterRequest request) throws IllegalStateException {
+    public TokensResponse register(RegisterRequest request) {
         if (repository.existsByUsername(request.getUsername())) throw new IllegalStateException("Пользователь с таким username уже существует");
         if (repository.existsByEmail(request.getEmail())) throw new IllegalStateException("Пользователь с таким email уже существует");
         String emailConfirmationToken = UUID.randomUUID().toString();
@@ -51,8 +51,9 @@ public class AuthenticationService {
                 .privateProfile(false)
                 .emailConfirmationToken(emailConfirmationToken)
                 .build();
-        var savedUser = repository.save(user);
+
         emailService.sendEmailConfirmationEmail(user.getEmail(), emailConfirmationToken);
+        var savedUser = repository.save(user);
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
         tokenUtils.saveUserToken(savedUser, jwtToken);
@@ -62,7 +63,7 @@ public class AuthenticationService {
                 .build();
     }
 
-    public TokensResponse login(AuthenticationRequest request) throws  UserDeactivatedException {
+    public TokensResponse login(AuthenticationRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),
@@ -103,13 +104,13 @@ public class AuthenticationService {
             }
         }
     }
-    public ResponseEntity<String> confirmation(String emailConfirmationToken) throws InvalidTokenException {
+    public ResponseEntity<String> confirmation(String emailConfirmationToken) {
         var user = repository.findByEmailConfirmationToken(emailConfirmationToken).orElseThrow(()->new InvalidTokenException("Некорректный токен подтверждения"));
         user.setEmailConfirmationToken(null);
         repository.save(user);
         return ResponseEntity.ok().body("Почта успешно подтверждена.");
     }
-    public ResponseEntity<String> logout(HttpServletRequest request) throws UserDeactivatedException {
+    public ResponseEntity<String> logout(HttpServletRequest request) {
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
         jwt=authHeader.substring(7);

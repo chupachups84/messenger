@@ -20,7 +20,7 @@ public class UserService {
     private final EmailService emailService;
     private final TokenUtils tokenUtils;
 
-    public InfoResponse info(String username) throws UserDeactivatedException {
+    public InfoResponse info(String username)  {
         var user = repository.findByUsername(username).orElseThrow();
         if (!user.isActive()) throw new UserDeactivatedException("Пользователь неактивен");
         return InfoResponse.builder()
@@ -33,7 +33,7 @@ public class UserService {
                 .email(user.getEmail()).build();
 
     }
-    public void edit(InfoRequest infoRequest, String username) throws UserDeactivatedException {
+    public void edit(InfoRequest infoRequest, String username) {
         var user = repository.findByUsername(username).orElseThrow();
         if(!user.isActive()) throw new UserDeactivatedException("Пользователь неактивен");
         if (infoRequest.getFirstname() != null) user.setFirstname(infoRequest.getFirstname());
@@ -43,7 +43,7 @@ public class UserService {
         if (infoRequest.getStatus() != null) user.setStatus(infoRequest.getStatus());
         repository.save(user);
     }
-    public TokensResponse changeUsername(UsernameRequest request, String username) throws UserDeactivatedException, IllegalStateException {
+    public TokensResponse changeUsername(UsernameRequest request, String username) {
         var user = repository.findByUsername(username).orElseThrow();
         if(!user.isActive()) throw new UserDeactivatedException( "Пользователь неактивен");
         if (repository.existsByUsername(request.getUsername())) throw new IllegalStateException("Пользователь с таким username уже существует");
