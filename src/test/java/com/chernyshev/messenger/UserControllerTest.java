@@ -17,8 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Objects;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -49,7 +48,7 @@ public class UserControllerTest {
 
     }
     @Test
-    public void postEditTest() throws Exception {
+    public void putEditTest() throws Exception {
         InfoRequest infoRequest = InfoRequest.builder()
                 .firstname("NewFirstName")
                 .lastname("NewLastName")
@@ -57,7 +56,7 @@ public class UserControllerTest {
                 .status("NewStatus")
                 .avatarUrl("NewAvatarUrl")
                 .build();
-        mockMvc.perform(post("/api/v1/user/edit")
+        mockMvc.perform(put("/api/v1/user/edit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(infoRequest)));
         mockMvc.perform(get("/api/v1/user"))
@@ -111,8 +110,8 @@ public class UserControllerTest {
                 .andExpect(status().isOk());
     }
     @Test
-    public void postDeleteTest() throws Exception{
-        mockMvc.perform(post("/api/v1/user/delete"))
+    public void deleteTest() throws Exception{
+        mockMvc.perform(delete("/api/v1/user/delete"))
                 .andDo(print())
                 .andExpect(status().isOk());
         System.out.println("\n\n\nАктивность пользователя: " + Objects.requireNonNull(userRepository.findByUsername("test1234").orElse(null)).isActive()+"\n\n\n");
@@ -127,9 +126,9 @@ public class UserControllerTest {
         System.out.println("\n\n\nАктивность пользователя: " + Objects.requireNonNull(userRepository.findByUsername("test1234").orElse(null)).isActive()+"\n\n\n");
     }
     @Test
-    public void postProfilePrivacyTest() throws Exception{
+    public void putProfilePrivacyTest() throws Exception{
         System.out.println("\n\n\nПриватность профиля пользователя: " + Objects.requireNonNull(userRepository.findByUsername("test1234").orElse(null)).isPrivateProfile()+"\n\n\n");
-        mockMvc.perform(post("/api/v1/user/change-profile-privacy"))
+        mockMvc.perform(put("/api/v1/user/change-profile-privacy"))
                 .andDo(print())
                 .andExpect(status().isOk());
         System.out.println("\n\n\nПриватность профиля пользователя: " + Objects.requireNonNull(userRepository.findByUsername("test1234").orElse(null)).isPrivateProfile()+"\n\n\n");

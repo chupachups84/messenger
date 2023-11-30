@@ -12,8 +12,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -73,7 +72,18 @@ public class FriendControllerTest {
     public void postSendFriendRequestTest() throws Exception {
         var user = userRepository.findByUsername("test2345").orElse(null);
         assert user!=null;
-        mockMvc.perform(post("/api/v1/friends/add/"+user.getId()))
+        mockMvc.perform(post("/api/v1/friends/"+user.getId()))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+    @Test
+    @WithUserDetails("test1234")
+    public void deleteMessageHistory() throws Exception{
+        var user = userRepository.findByUsername("test3456").orElse(null);
+        assert user!=null;
+        mockMvc.perform(post("/api/v1/friends/"+user.getId()))
+                .andDo(print());
+        mockMvc.perform(delete("/api/v1/friends/"+user.getId()))
                 .andDo(print())
                 .andExpect(status().isOk());
     }

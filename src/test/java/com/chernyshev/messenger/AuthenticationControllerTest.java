@@ -18,8 +18,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -39,7 +38,7 @@ public class AuthenticationControllerTest {
         RegisterRequest registerRequest = RegisterRequest.builder()
                 .firstname("test")
                 .lastname("test")
-                .email("test@mail.com")
+                .email("shpota.den@mail.ru")
                 .username("test")
                 .password("test1234")
                 .build();
@@ -106,7 +105,7 @@ public class AuthenticationControllerTest {
     @Test
     @WithUserDetails("test1234")
     public void postLoginUserDeactivatedTest() throws Exception{
-        mockMvc.perform(post("/api/v1/user/delete"));
+        mockMvc.perform(delete("/api/v1/user/delete"));
         AuthenticationRequest authenticationRequest = AuthenticationRequest.builder()
                 .username("test1234")
                 .password("test1234")
@@ -133,7 +132,7 @@ public class AuthenticationControllerTest {
         assert user!=null;
         String token = user.getEmailConfirmationToken();
         System.out.println("\n\n\nToken: = "+token+"\n\n\n");
-        mockMvc.perform(get("/api/v1/auth/confirm/"+token))
+        mockMvc.perform(post("/api/v1/auth/confirm/"+token))
                 .andDo(print())
                 .andExpect(status().isOk());
         user = userRepository.findByUsername("test").orElse(null);
@@ -144,7 +143,7 @@ public class AuthenticationControllerTest {
     @Test
     @WithUserDetails("test1234")
     public void getWrongEmailConfirmationTokenTest() throws Exception {
-        mockMvc.perform(get("/api/v1/auth/confirm/wrong_token"))
+        mockMvc.perform(post("/api/v1/auth/confirm/wrong_token"))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
