@@ -19,12 +19,13 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final FriendService friendService;
+
+
     public MessageResponse sendMessage(String senderName, Long receiverId, String text)  {
         UserEntity sender = userRepository.findByUsername(senderName).orElseThrow();
         UserEntity receiver = userRepository.findById(receiverId).orElse(null);
         if(receiver==null||!receiver.isActive()) throw new IllegalStateException("Пользователь не найден");
-        if (receiver.isPrivateProfile()&&!friendService.areFriends(sender,receiver))
-            throw new FriendshipException("Не можете отправить сообщение пользователю");
+        if (receiver.isPrivateProfile()&&!friendService.areFriends(sender,receiver)) throw new FriendshipException("Не можете отправить сообщение пользователю");
         var message= MessageEntity.builder()
                         .sender(sender)
                         .receiver(receiver)

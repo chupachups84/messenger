@@ -17,6 +17,7 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 public class WebSocketConfig implements WebSocketConfigurer {
     private final MessageService messageService;
     private final UserRepository userRepository;
+    private final WebSocketUtils webSocketUtils;
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(myHandler(), "websocket/messages/{id}").setAllowedOrigins("*");
@@ -24,6 +25,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Bean
     public WebSocketHandler myHandler() {
-        return new MyWebSocketHandler(messageService,userRepository);
+        return new MyWebSocketHandler(messageService,userRepository,webSocketUtils);
     }
 }

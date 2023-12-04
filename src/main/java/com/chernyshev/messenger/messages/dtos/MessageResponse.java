@@ -16,4 +16,5 @@ public class MessageResponse {
     private String receiver;
     private String text;
     private LocalDateTime sentAt;
+
 }
