@@ -16,7 +16,7 @@
  * есть возможность просматривать друзей другого пользователя :white_check_mark:
  * возможность скрывать свой список друзей. :white_check_mark:
  * использование базы данных (PostgreSQL) для хранения данных; :white_check_mark:
- * документирование запросов через Swagger; :white_check_mark:
+ * [документирование запросов через Swagger](http://localhost:8080/swagger-ui/index.html#); :white_check_mark:
  * написание тестов. :white_check_mark:
  * обмен и просмотр сообщений реализован с помощью веб-сокетов. :white_check_mark:
 ___
@@ -35,6 +35,4 @@ spring.mail.password=pTKV40Tt3dgzbCfrd6Nr
 spring.mail.port=465
 ```
 Указать свои данные для рассылки
-___
-# Swagger OpenAPI
-[Swagger OpenAPI документация](http://localhost:8080/swagger-ui/index.html#)
+
