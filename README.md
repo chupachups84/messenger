@@ -19,12 +19,11 @@
 #### документирование запросов через Swagger; :white_check_mark:
 #### написание тестов. :white_check_mark:
 #### обмен и просмотр сообщений реализован с помощью веб-сокетов. :white_check_mark:
+ * ПРИВЕТ
 ___
-# Usage
 ## Postgre SQL
 ### Указать свой адрес в .properties
 ## Email
 ### Указать свою почту в .properties
-___
-# Swagger OpenAPI
-http://localhost:8080/swagger-ui/index.html#
+## Swagger OpenAPI
+[Swagger OpenAPI документация](http://localhost:8080/swagger-ui/index.html#)
