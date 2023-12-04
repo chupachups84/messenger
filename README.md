@@ -20,9 +20,21 @@
  * написание тестов. :white_check_mark:
  * обмен и просмотр сообщений реализован с помощью веб-сокетов. :white_check_mark:
 ___
-## Postgre SQL
-### Указать свой адрес в .properties
-## Email
-### Указать свою почту в .properties
-## Swagger OpenAPI
+# Для работы
+#### В `application.properties` и `application-test.properties` изменить параметры
+```properies
+spring.datasource.url=jdbc:postgresql://localhost:5432/messenger
+spring.datasource.password=0380
+```
+Указать свои данные для доступа к Postgres
+
+```properies
+spring.mail.host=smtp.mail.ru
+spring.mail.username=relex-test-back@mail.ru
+spring.mail.password=pTKV40Tt3dgzbCfrd6Nr
+spring.mail.port=465
+```
+Указать свои данные для рассылки
+___
+# Swagger OpenAPI
 [Swagger OpenAPI документация](http://localhost:8080/swagger-ui/index.html#)
