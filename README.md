@@ -20,18 +20,16 @@
  * обмен и просмотр сообщений реализован с помощью веб-сокетов. :white_check_mark:
 ___
 ## Для работы
-##### В `application.properties` и `application-test.properties` изменить параметры
+##### В `application.properties` и `application-test.properties` изменить параметры:
+Указать свои данные для доступа к Postgres
 ```properies
 spring.datasource.url=jdbc:postgresql://localhost:5432/messenger
 spring.datasource.password=0380
 ```
-Указать свои данные для доступа к Postgres
-
+Указать свои данные для рассылки
 ```properies
 spring.mail.host=smtp.mail.ru
 spring.mail.username=relex-test-back@mail.ru
 spring.mail.password=pTKV40Tt3dgzbCfrd6Nr
 spring.mail.port=465
 ```
-Указать свои данные для рассылки
-
