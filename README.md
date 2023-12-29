@@ -3,7 +3,7 @@
 
 Задание: https://docs.google.com/document/d/1JJ0xWr8maPbsthWCR5oN8934VELzpoXmU-SobxY-8G0/edit
 
-## Наличие необязательных задач
+## Релизованные доп. фичи
  * хэширование паролей; :white_check_mark:
  * подтверждение почты через ссылку  в письме, отправленном на указанную почту. :white_check_mark:
  * поддержка Spring Security; :white_check_mark:
@@ -19,7 +19,7 @@
  * написание тестов. :white_check_mark:
  * обмен и просмотр сообщений реализован с помощью веб-сокетов. :white_check_mark:
 ___
-## Для работы
+## Для запуска
 ##### В `application.properties` и `application-test.properties` изменить параметры:
 
 Указать свои данные для почты
