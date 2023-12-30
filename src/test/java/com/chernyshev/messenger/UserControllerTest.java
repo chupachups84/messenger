@@ -1,8 +1,8 @@
 package com.chernyshev.messenger;
 
-import com.chernyshev.messenger.api.dtos.*;
+import com.chernyshev.messenger.api.dtos.AuthenticationDto;
+import com.chernyshev.messenger.api.dtos.PasswordDto;
 import com.chernyshev.messenger.store.repositories.UserRepository;
-import com.chernyshev.messenger.api.services.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +32,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private UserService userService;
     @Autowired
     private UserRepository userRepository;
     @Test

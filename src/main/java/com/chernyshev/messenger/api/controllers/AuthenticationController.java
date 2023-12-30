@@ -3,7 +3,7 @@ package com.chernyshev.messenger.api.controllers;
 import com.chernyshev.messenger.api.dtos.AuthenticationDto;
 import com.chernyshev.messenger.api.dtos.RegisterDto;
 import com.chernyshev.messenger.api.dtos.TokenDto;
-import com.chernyshev.messenger.api.email.EmailService;
+import com.chernyshev.messenger.api.services.EmailService;
 import com.chernyshev.messenger.api.exceptions.myExceptions.InvalidTokenException;
 import com.chernyshev.messenger.api.exceptions.myExceptions.UserDeactivatedException;
 import com.chernyshev.messenger.api.security.JwtService;

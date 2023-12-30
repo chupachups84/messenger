@@ -1,4 +1,4 @@
-package com.chernyshev.messenger.api.email;
+package com.chernyshev.messenger.api.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
