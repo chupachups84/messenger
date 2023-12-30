@@ -1,4 +1,4 @@
-package com.chernyshev.messenger.api.security;
+package com.chernyshev.messenger.api.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

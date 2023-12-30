@@ -1,4 +1,4 @@
-package com.chernyshev.messenger.api.security;
+package com.chernyshev.messenger.api.services;
 
 import com.chernyshev.messenger.store.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +17,8 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException{
-        var user =userRepository.findByUsername(username).orElse(null);
-        if(user==null) throw new UsernameNotFoundException("Неверный логин или пароль");
+        var user =userRepository.findByUsername(username)
+                .orElseThrow(()-> new UsernameNotFoundException("Неверный логин или пароль"));
         return new User(
                 user.getUsername(),
                 user.getPassword(),

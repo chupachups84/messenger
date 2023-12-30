@@ -6,7 +6,7 @@ import com.chernyshev.messenger.api.dtos.TokenDto;
 import com.chernyshev.messenger.api.services.EmailService;
 import com.chernyshev.messenger.api.exceptions.myExceptions.InvalidTokenException;
 import com.chernyshev.messenger.api.exceptions.myExceptions.UserDeactivatedException;
-import com.chernyshev.messenger.api.security.JwtService;
+import com.chernyshev.messenger.api.services.JwtService;
 import com.chernyshev.messenger.api.services.TokenService;
 import com.chernyshev.messenger.store.models.Role;
 import com.chernyshev.messenger.store.models.UserEntity;
@@ -72,7 +72,7 @@ public class AuthenticationController {
 
         emailService.sendEmailConfirmationEmail(user.getEmail(), emailConfirmationToken);
 
-        return ResponseEntity.ok(tokenService.getTokenDto(user));
+        return ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
     }
     @PostMapping(LOGIN)
     public ResponseEntity<TokenDto> authenticate(@RequestBody @Valid AuthenticationDto request) {
@@ -86,13 +86,13 @@ public class AuthenticationController {
                 .filter(UserEntity::isActive).orElseThrow(()->new UserDeactivatedException("Пользователь неактивен"));
         tokenService.revokeAllUserToken(user);
 
-        return  ResponseEntity.ok(tokenService.getTokenDto(user));
+        return  ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
     }
     @PatchMapping(EMAIL_CONFIRMATION)
     public ResponseEntity<String> confirm(@RequestParam String token) throws InvalidTokenException {
         var user = repository.findByEmailConfirmationToken(token).orElseThrow(()->new InvalidTokenException("Некорректный токен подтверждения"));
         user.setEmailConfirmationToken(null);
-
+        repository.saveAndFlush(user);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body("{\"message\":\"Почта успешно подтверждена\"}");
     }
     @PutMapping(REFRESH_TOKEN)
@@ -125,8 +125,8 @@ public class AuthenticationController {
         String jwt;
         jwt=authHeader.substring(7);
         String username=jwtService.extractUsername(jwt);
-        var user=repository.findByUsername(username).orElseThrow();
-        if(!user.isActive()) throw new UserDeactivatedException("Пользователь неактивен");
+        var user=repository.findByUsername(username).filter(UserEntity::isActive)
+                .orElseThrow(()->new UserDeactivatedException("Пользователь неактивен"));
         var storedToken=tokenRepository.findByToken(jwt).orElse(null);
         if(storedToken!=null){
             storedToken.setExpired(true);

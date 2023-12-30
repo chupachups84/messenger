@@ -1,7 +1,6 @@
 package com.chernyshev.messenger.api.services;
 
 import com.chernyshev.messenger.api.dtos.TokenDto;
-import com.chernyshev.messenger.api.security.JwtService;
 import com.chernyshev.messenger.store.models.TokenEntity;
 import com.chernyshev.messenger.store.models.TokenType;
 import com.chernyshev.messenger.store.models.UserEntity;
@@ -41,7 +40,6 @@ public class TokenService {
     public TokenDto getTokenDto(UserEntity user) {
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
-        repository.save(user);
         revokeAllUserToken(user);
         saveUserToken(user,jwtToken);
         return TokenDto.builder()

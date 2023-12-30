@@ -2,11 +2,13 @@ package com.chernyshev.messenger.api.exceptions;
 
 import com.chernyshev.messenger.api.exceptions.myExceptions.InvalidTokenException;
 import com.chernyshev.messenger.api.exceptions.myExceptions.FriendshipException;
+import com.chernyshev.messenger.api.exceptions.myExceptions.NoPermissionException;
 import com.chernyshev.messenger.api.exceptions.myExceptions.UserDeactivatedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.MailSendException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -34,7 +36,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             UserDeactivatedException.class,
             FriendshipException.class,
-            InvalidTokenException.class
+            InvalidTokenException.class,
+            NoPermissionException.class,
+            UsernameNotFoundException.class
     })
     public ResponseEntity<String> handleUserDeactivatedException(RuntimeException e) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).contentType(MediaType.APPLICATION_JSON).body("{\"message\":\""+e.getMessage()+"\"}");

@@ -1,5 +1,6 @@
-package com.chernyshev.messenger.api.security;
+package com.chernyshev.messenger.api.config;
 
+import com.chernyshev.messenger.api.services.JwtService;
 import com.chernyshev.messenger.store.repositories.TokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

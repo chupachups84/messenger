@@ -1,4 +1,4 @@
-package com.chernyshev.messenger.api.security;
+package com.chernyshev.messenger.api.services;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
