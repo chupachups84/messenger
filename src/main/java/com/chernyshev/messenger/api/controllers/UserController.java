@@ -21,12 +21,13 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/user")
+@RequestMapping("/api/v1/users")
 public class UserController {
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final TokenService tokenService;
+    public final String INFO ="/{id}";
     public final String EDIT ="/edit";
     public final String CHANGE_USERNAME = "/change-username";
     public final String CHANGE_EMAIL = "/change-email";
@@ -35,10 +36,11 @@ public class UserController {
     public final String RECOVER = "/recover";
     public final String CHANGE_PROFILE_PRIVACY = "/change-profile-privacy";
 
-    @GetMapping()
-    public ResponseEntity<InfoDto> info(Principal principal){
-
-        var user = repository.findByUsername(principal.getName()).filter(UserEntity::isActive)
+    @GetMapping(INFO)
+    public ResponseEntity<InfoDto> info(Principal principal,@PathVariable Long id){
+        //TODO скрытие профиля от пользователей ,что не в друзьях
+        var user = repository.findById(id)
+                .filter(UserEntity::isActive)
                 .orElseThrow(()->new UserDeactivatedException("Пользователь неактивен"));
         return ResponseEntity.ok().body(
                 InfoDto.builder()
@@ -51,15 +53,14 @@ public class UserController {
                         .email(user.getEmail()).build());
     }
     @PatchMapping(EDIT)
-    public ResponseEntity<String> edit(
+    public ResponseEntity<String> edit(Principal principal,
             @RequestParam(value = "first_name",required = false) Optional<String> optionalFirstname,
             @RequestParam(value = "last_name",required = false) Optional<String> optionalLastname,
             @RequestParam(value = "bio",required = false) Optional<String> optionalBio,
             @RequestParam(value = "avatar_url",required = false) Optional<String> optionalAvatarUrl,
-            @RequestParam(value = "status",required = false) Optional<String> optionalStatus,
-            Principal principal) {
-        String username = principal.getName();
-        var user = repository.findByUsername(username).filter(UserEntity::isActive)
+            @RequestParam(value = "status",required = false) Optional<String> optionalStatus) {
+        var user = repository.findByUsername(principal.getName())
+                .filter(UserEntity::isActive)
                 .orElseThrow(()->new UserDeactivatedException("Пользователь неактивен"));
         optionalFirstname.filter(firstname->!firstname.trim().isEmpty()).ifPresent(user::setFirstname);
         optionalLastname.filter(lastname->!lastname.trim().isEmpty()).ifPresent(user::setLastname);
@@ -69,7 +70,7 @@ public class UserController {
 
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body("{\"message\":\"Информация успешно изменена\"}");
     }
-    @PostMapping(CHANGE_USERNAME)
+    @PatchMapping(CHANGE_USERNAME)
     public ResponseEntity<TokenDto> changeUsername(@RequestParam(value = "username") String newUsername, Principal principal) {
         var user = repository.findByUsername(principal.getName()).filter(UserEntity::isActive)
                 .orElseThrow(()->new UserDeactivatedException("Пользователь неактивен"));
@@ -80,7 +81,7 @@ public class UserController {
         user.setUsername(newUsername);
         return ResponseEntity.ok(tokenService.getTokenDto(user));
     }
-    @PostMapping(CHANGE_EMAIL)
+    @PatchMapping(CHANGE_EMAIL)
     public ResponseEntity<TokenDto> changeEmail(@RequestParam(value = "email") String newEmail, Principal principal) {
         var user = repository.findByUsername(principal.getName()).filter(UserEntity::isActive)
                 .orElseThrow(()->new UserDeactivatedException("Пользователь неактивен"));
@@ -94,7 +95,7 @@ public class UserController {
         emailService.sendEmailConfirmationEmail(user.getEmail(), emailConfirmationToken);
         return ResponseEntity.ok(tokenService.getTokenDto(user));
     }
-    @PostMapping(CHANGE_PASSWORD)
+    @PatchMapping(CHANGE_PASSWORD)
     public ResponseEntity<TokenDto> changePassword(@RequestBody @Valid PasswordDto request, Principal principal){
         var user = repository.findByUsername(principal.getName()).filter(UserEntity::isActive)
                 .orElseThrow(()->new UserDeactivatedException("Пользователь неактивен"));
@@ -113,7 +114,7 @@ public class UserController {
         user.setActive(false);
         return ResponseEntity.ok(tokenService.getTokenDto(user));
     }
-    @PostMapping(RECOVER)
+    @PatchMapping(RECOVER)
     public ResponseEntity<TokenDto> recover(Principal principal) {
         var user = repository.findDeactivatedByUsername(principal.getName()).orElseThrow();
         user.setActive(true);

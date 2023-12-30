@@ -18,20 +18,18 @@ import java.security.Principal;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/friends")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
-@SecurityRequirement(name = "bearerAuth")
-@Tag(name = "Friends",description = "FriendsApi")
 public class FriendController {
     private final FriendService friendService;
 
-    @GetMapping()
+    @GetMapping("/friends")
     public ResponseEntity<List<FriendResponse>> getMyFriends(Principal principal) {
         List<FriendResponse> responseList = friendService.getFriends(principal.getName());
         return ResponseEntity.ok(responseList);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id}/friends")
     public ResponseEntity<List<FriendResponse>> getUserFriends(@PathVariable Long id,Principal principal) {
         List<FriendResponse> responseList = friendService.getUserFriends(id, principal.getName());
         return ResponseEntity.ok(responseList);

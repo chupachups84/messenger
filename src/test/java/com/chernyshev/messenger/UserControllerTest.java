@@ -1,6 +1,7 @@
 package com.chernyshev.messenger;
 
 import com.chernyshev.messenger.api.dtos.AuthenticationDto;
+import com.chernyshev.messenger.api.dtos.InfoDto;
 import com.chernyshev.messenger.api.dtos.PasswordDto;
 import com.chernyshev.messenger.store.repositories.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,7 +48,7 @@ public class UserControllerTest {
     }
     @Test
     public void putEditTest() throws Exception {
-        InfoRequest infoRequest = InfoRequest.builder()
+        InfoDto infoRequest = InfoDto.builder()
                 .firstname("NewFirstName")
                 .lastname("NewLastName")
                 .bio("NewBio")
