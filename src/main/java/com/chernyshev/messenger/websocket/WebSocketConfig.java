@@ -1,7 +1,7 @@
 package com.chernyshev.messenger.websocket;
 
-import com.chernyshev.messenger.messages.services.MessageService;
-import com.chernyshev.messenger.users.repositories.UserRepository;
+import com.chernyshev.messenger.services.MessageService;
+import com.chernyshev.messenger.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

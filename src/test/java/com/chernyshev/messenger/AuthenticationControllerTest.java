@@ -1,8 +1,8 @@
 package com.chernyshev.messenger;
 
-import com.chernyshev.messenger.users.dtos.AuthenticationRequest;
-import com.chernyshev.messenger.users.dtos.RegisterRequest;
-import com.chernyshev.messenger.users.repositories.UserRepository;
+import com.chernyshev.messenger.dtos.AuthenticationDto;
+import com.chernyshev.messenger.dtos.RegisterDto;
+import com.chernyshev.messenger.repositories.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,7 @@ public class AuthenticationControllerTest {
     private UserRepository userRepository;
     @Test
     public void postRegisterTest() throws Exception {
-        RegisterRequest registerRequest = RegisterRequest.builder()
+        RegisterDto registerDTO = RegisterDto.builder()
                 .firstname("test")
                 .lastname("test")
                 .email("shpota.den@mail.ru")
@@ -44,13 +44,13 @@ public class AuthenticationControllerTest {
                 .build();
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(registerRequest)))
+                        .content(new ObjectMapper().writeValueAsString(registerDTO)))
                 .andDo(print())
                 .andExpect(status().isOk());
     }
     @Test
     public void postRegisterUsernameAlreadyExistTest() throws Exception {
-        RegisterRequest registerRequest = RegisterRequest.builder()
+        RegisterDto registerDTO = RegisterDto.builder()
                 .firstname("test")
                 .lastname("test")
                 .email("test@gmail.com")
@@ -59,13 +59,13 @@ public class AuthenticationControllerTest {
                 .build();
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(registerRequest)))
+                        .content(new ObjectMapper().writeValueAsString(registerDTO)))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
     @Test
     public void postRegisterEmailAlreadyExistTest() throws Exception {
-        RegisterRequest registerRequest = RegisterRequest.builder()
+        RegisterDto registerDTO = RegisterDto.builder()
                 .firstname("test")
                 .lastname("test")
                 .email("test1@gmail.com")
@@ -74,31 +74,31 @@ public class AuthenticationControllerTest {
                 .build();
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(registerRequest)))
+                        .content(new ObjectMapper().writeValueAsString(registerDTO)))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
     @Test
     public void postLoginTest() throws Exception{
-        AuthenticationRequest authenticationRequest = AuthenticationRequest.builder()
+        AuthenticationDto authenticationDTO = AuthenticationDto.builder()
                 .username("test1234")
                 .password("test1234")
                 .build();
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(authenticationRequest)))
+                        .content(new ObjectMapper().writeValueAsString(authenticationDTO)))
                 .andDo(print())
                 .andExpect(status().isOk());
     }
     @Test
     public void postLoginUsernameNotFoundTest() throws Exception{
-        AuthenticationRequest authenticationRequest = AuthenticationRequest.builder()
+        AuthenticationDto authenticationDTO = AuthenticationDto.builder()
                 .username("test1234")
                 .password("test12345")
                 .build();
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(authenticationRequest)))
+                        .content(new ObjectMapper().writeValueAsString(authenticationDTO)))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
@@ -106,19 +106,19 @@ public class AuthenticationControllerTest {
     @WithUserDetails("test1234")
     public void postLoginUserDeactivatedTest() throws Exception{
         mockMvc.perform(delete("/api/v1/user/delete"));
-        AuthenticationRequest authenticationRequest = AuthenticationRequest.builder()
+        AuthenticationDto authenticationDTO = AuthenticationDto.builder()
                 .username("test1234")
                 .password("test1234")
                 .build();
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(authenticationRequest)))
+                        .content(new ObjectMapper().writeValueAsString(authenticationDTO)))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
     @Test
     public void getEmailConfirmationTokenTest() throws Exception {
-        RegisterRequest registerRequest = RegisterRequest.builder()
+        RegisterDto registerDTO = RegisterDto.builder()
                 .firstname("test")
                 .lastname("test")
                 .email("test@mail.ru")
@@ -127,7 +127,7 @@ public class AuthenticationControllerTest {
                 .build();
         mockMvc.perform(post("/api/v1/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(registerRequest)));
+                .content(new ObjectMapper().writeValueAsString(registerDTO)));
         var user = userRepository.findByUsername("test").orElse(null);
         assert user!=null;
         String token = user.getEmailConfirmationToken();
@@ -149,13 +149,13 @@ public class AuthenticationControllerTest {
     }
     @Test
     public void postLogoutTest() throws Exception {
-        AuthenticationRequest authenticationRequest = AuthenticationRequest.builder()
+        AuthenticationDto authenticationDTO = AuthenticationDto.builder()
                 .username("test1234")
                 .password("test1234")
                 .build();
         MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(authenticationRequest))).andReturn();
+                .content(new ObjectMapper().writeValueAsString(authenticationDTO))).andReturn();
         String accessToken = JsonPath.read(result.getResponse().getContentAsString(), "$.accessToken");
         mockMvc.perform(post("/api/v1/auth/logout")
                         .header("Authorization", "Bearer " + accessToken))

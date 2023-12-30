@@ -1,6 +1,6 @@
 package com.chernyshev.messenger.security;
 
-import com.chernyshev.messenger.users.repositories.TokenRepository;
+import com.chernyshev.messenger.repositories.TokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

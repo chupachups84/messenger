@@ -1,8 +1,8 @@
 package com.chernyshev.messenger;
 
-import com.chernyshev.messenger.users.dtos.*;
-import com.chernyshev.messenger.users.repositories.UserRepository;
-import com.chernyshev.messenger.users.services.UserService;
+import com.chernyshev.messenger.dtos.*;
+import com.chernyshev.messenger.repositories.UserRepository;
+import com.chernyshev.messenger.services.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,12 +78,12 @@ public class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(usernameRequest)));
 
-        AuthenticationRequest authenticationRequest = AuthenticationRequest.builder()
+        AuthenticationDto authenticationDTO = AuthenticationDto.builder()
                 .username("test1111")
                 .password("test1234").build();
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(authenticationRequest)))
+                        .content(new ObjectMapper().writeValueAsString(authenticationDTO)))
                 .andDo(print())
                 .andExpect(status().isOk());
     }

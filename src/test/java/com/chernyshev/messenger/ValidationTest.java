@@ -1,8 +1,7 @@
 package com.chernyshev.messenger;
 
-import com.chernyshev.messenger.messages.dtos.MessageRequest;
-import com.chernyshev.messenger.users.dtos.*;
-import com.chernyshev.messenger.users.repositories.UserRepository;
+import com.chernyshev.messenger.dtos.*;
+import com.chernyshev.messenger.repositories.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +30,7 @@ public class ValidationTest {
     private UserRepository userRepository;
     @Test
     public void invalidRegisterLastnameTest() throws Exception {
-        RegisterRequest registerRequest = RegisterRequest.builder()
+        RegisterDto registerDTO = RegisterDto.builder()
                 .username("username")
                 .firstname("firstname")
                 .lastname("")
@@ -40,12 +39,12 @@ public class ValidationTest {
                 .build();
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(registerRequest)))
+                        .content(new ObjectMapper().writeValueAsString(registerDTO)))
                 .andExpect(status().isBadRequest());
     }
     @Test
     public void invalidRegisterFirstnameTest() throws Exception {
-        RegisterRequest registerRequest = RegisterRequest.builder()
+        RegisterDto registerDTO = RegisterDto.builder()
                 .username("username")
                 .firstname("")
                 .lastname("lastname")
@@ -54,12 +53,12 @@ public class ValidationTest {
                 .build();
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(registerRequest)))
+                        .content(new ObjectMapper().writeValueAsString(registerDTO)))
                 .andExpect(status().isBadRequest());
     }
     @Test
     public void invalidRegisterEmailNotAnEmailTest() throws Exception {
-        RegisterRequest registerRequest = RegisterRequest.builder()
+        RegisterDto registerDTO = RegisterDto.builder()
                 .username("username")
                 .firstname("firstname")
                 .lastname("lastname")
@@ -68,12 +67,12 @@ public class ValidationTest {
                 .build();
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(registerRequest)))
+                        .content(new ObjectMapper().writeValueAsString(registerDTO)))
                 .andExpect(status().isBadRequest());
     }
     @Test
     public void invalidRegisterEmailIsEmptyTest() throws Exception {
-        RegisterRequest registerRequest = RegisterRequest.builder()
+        RegisterDto registerDTO = RegisterDto.builder()
                 .username("username")
                 .firstname("firstname")
                 .lastname("lastname")
@@ -82,12 +81,12 @@ public class ValidationTest {
                 .build();
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(registerRequest)))
+                        .content(new ObjectMapper().writeValueAsString(registerDTO)))
                 .andExpect(status().isBadRequest());
     }
     @Test
     public void invalidRegisterPasswordLessThen8SymbolsTest() throws Exception {
-        RegisterRequest registerRequest = RegisterRequest.builder()
+        RegisterDto registerDTO = RegisterDto.builder()
                 .username("username")
                 .firstname("firstname")
                 .lastname("lastname")
@@ -96,12 +95,12 @@ public class ValidationTest {
                 .build();
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(registerRequest)))
+                        .content(new ObjectMapper().writeValueAsString(registerDTO)))
                 .andExpect(status().isBadRequest());
     }
     @Test
     public void invalidRegisterPasswordIsBlankTest() throws Exception {
-        RegisterRequest registerRequest = RegisterRequest.builder()
+        RegisterDto registerDTO = RegisterDto.builder()
                 .username("username")
                 .firstname("firstname")
                 .lastname("lastname")
@@ -110,29 +109,29 @@ public class ValidationTest {
                 .build();
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(registerRequest)))
+                        .content(new ObjectMapper().writeValueAsString(registerDTO)))
                 .andExpect(status().isBadRequest());
     }
     @Test
     public void invalidLoginUsernameTest() throws Exception {
-        AuthenticationRequest authenticationRequest = AuthenticationRequest.builder()
+        AuthenticationDto authenticationDTO = AuthenticationDto.builder()
                 .username("")
                 .password("test1234")
                 .build();
         mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(authenticationRequest)))
+                .content(new ObjectMapper().writeValueAsString(authenticationDTO)))
                 .andExpect(status().isBadRequest());
     }
     @Test
     public void invalidLoginPasswordTest() throws Exception {
-        AuthenticationRequest authenticationRequest = AuthenticationRequest.builder()
+        AuthenticationDto authenticationDTO = AuthenticationDto.builder()
                 .username("test1234")
                 .password("")
                 .build();
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(authenticationRequest)))
+                        .content(new ObjectMapper().writeValueAsString(authenticationDTO)))
                 .andExpect(status().isBadRequest());
     }
     @Test

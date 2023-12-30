@@ -1,6 +1,6 @@
 package com.chernyshev.messenger.security;
 
-import com.chernyshev.messenger.users.repositories.UserRepository;
+import com.chernyshev.messenger.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;

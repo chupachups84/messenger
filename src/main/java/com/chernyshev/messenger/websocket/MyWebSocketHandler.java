@@ -1,9 +1,9 @@
 package com.chernyshev.messenger.websocket;
 
 import com.chernyshev.messenger.exception.myExceptions.FriendshipException;
-import com.chernyshev.messenger.messages.dtos.MessageResponse;
-import com.chernyshev.messenger.messages.services.MessageService;
-import com.chernyshev.messenger.users.repositories.UserRepository;
+import com.chernyshev.messenger.dtos.MessageResponse;
+import com.chernyshev.messenger.services.MessageService;
+import com.chernyshev.messenger.repositories.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
