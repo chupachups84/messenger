@@ -1,8 +1,8 @@
 package com.chernyshev.messenger;
 
-import com.chernyshev.messenger.dtos.*;
-import com.chernyshev.messenger.repositories.UserRepository;
-import com.chernyshev.messenger.services.UserService;
+import com.chernyshev.messenger.api.dtos.*;
+import com.chernyshev.messenger.store.repositories.UserRepository;
+import com.chernyshev.messenger.api.services.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,13 +99,13 @@ public class UserControllerTest {
     }
     @Test
     public void postPasswordTest() throws Exception {
-        PasswordRequest passwordRequest = PasswordRequest.builder()
+        PasswordDto passwordDto = PasswordDto.builder()
                 .oldPassword("test1234")
                 .newPassword("test1111")
                 .build();
         mockMvc.perform(post("/api/v1/user/change-password")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(passwordRequest)))
+                        .content(new ObjectMapper().writeValueAsString(passwordDto)))
                 .andDo(print())
                 .andExpect(status().isOk());
     }
@@ -118,7 +118,6 @@ public class UserControllerTest {
     }
     @Test
     public void postRecoverTest() throws Exception {
-        userService.delete("test1234");
         System.out.println("\n\n\nАктивность пользователя: " + Objects.requireNonNull(userRepository.findByUsername("test1234").orElse(null)).isActive()+"\n\n\n");
         mockMvc.perform(post("/api/v1/user/recover"))
                 .andDo(print())

@@ -1,7 +1,7 @@
 package com.chernyshev.messenger;
 
-import com.chernyshev.messenger.dtos.*;
-import com.chernyshev.messenger.repositories.UserRepository;
+import com.chernyshev.messenger.api.dtos.*;
+import com.chernyshev.messenger.store.repositories.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -170,47 +170,47 @@ public class ValidationTest {
     @Test
     @WithUserDetails("test1234")
     public void invalidUserOldPasswordLessThen8SymbolsTest() throws Exception{
-        PasswordRequest passwordRequest = PasswordRequest.builder()
+        PasswordDto passwordDto = PasswordDto.builder()
                 .oldPassword("1234567")
                 .newPassword("12345678")
                 .build();
         mockMvc.perform(post("/api/v1/user/change-password")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(passwordRequest)))
+                        .content(new ObjectMapper().writeValueAsString(passwordDto)))
                 .andExpect(status().isBadRequest());
     }
     @Test
     @WithUserDetails("test1234")
     public void invalidUserOldPasswordIsBlankTest() throws Exception{
-        PasswordRequest passwordRequest = PasswordRequest.builder()
+        PasswordDto passwordDto = PasswordDto.builder()
                 .newPassword("12345678")
                 .build();
         mockMvc.perform(post("/api/v1/user/change-password")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(passwordRequest)))
+                        .content(new ObjectMapper().writeValueAsString(passwordDto)))
                 .andExpect(status().isBadRequest());
     }
     @Test
     @WithUserDetails("test1234")
     public void invalidUserNewPasswordLessThen8SymbolsTest() throws Exception{
-        PasswordRequest passwordRequest = PasswordRequest.builder()
+        PasswordDto passwordDto = PasswordDto.builder()
                 .oldPassword("12345678")
                 .newPassword("1234567")
                 .build();
         mockMvc.perform(post("/api/v1/user/change-password")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(passwordRequest)))
+                        .content(new ObjectMapper().writeValueAsString(passwordDto)))
                 .andExpect(status().isBadRequest());
     }
     @Test
     @WithUserDetails("test1234")
     public void invalidUserNewPasswordIsBlankTest() throws Exception{
-        PasswordRequest passwordRequest = PasswordRequest.builder()
+        PasswordDto passwordDto = PasswordDto.builder()
                 .oldPassword("12345678")
                 .build();
         mockMvc.perform(post("/api/v1/user/change-password")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(passwordRequest)))
+                        .content(new ObjectMapper().writeValueAsString(passwordDto)))
                 .andExpect(status().isBadRequest());
     }
     @Test

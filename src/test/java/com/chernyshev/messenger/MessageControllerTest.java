@@ -1,8 +1,8 @@
 package com.chernyshev.messenger;
 
-import com.chernyshev.messenger.services.FriendService;
-import com.chernyshev.messenger.dtos.MessageRequest;
-import com.chernyshev.messenger.repositories.UserRepository;
+import com.chernyshev.messenger.api.services.FriendService;
+import com.chernyshev.messenger.api.dtos.MessageRequest;
+import com.chernyshev.messenger.store.repositories.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

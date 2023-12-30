@@ -1,7 +1,7 @@
 package com.chernyshev.messenger;
 
-import com.chernyshev.messenger.services.FriendService;
-import com.chernyshev.messenger.repositories.UserRepository;
+import com.chernyshev.messenger.api.services.FriendService;
+import com.chernyshev.messenger.store.repositories.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

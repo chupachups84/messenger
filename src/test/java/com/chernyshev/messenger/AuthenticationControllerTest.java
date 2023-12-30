@@ -1,8 +1,8 @@
 package com.chernyshev.messenger;
 
-import com.chernyshev.messenger.dtos.AuthenticationDto;
-import com.chernyshev.messenger.dtos.RegisterDto;
-import com.chernyshev.messenger.repositories.UserRepository;
+import com.chernyshev.messenger.api.dtos.AuthenticationDto;
+import com.chernyshev.messenger.api.dtos.RegisterDto;
+import com.chernyshev.messenger.store.repositories.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
