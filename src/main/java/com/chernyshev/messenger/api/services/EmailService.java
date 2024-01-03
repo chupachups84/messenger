@@ -18,7 +18,7 @@ public class EmailService {
         mailMessage.setTo(toEmail);
         mailMessage.setSubject("Подтверждение адреса электронной почты");
         mailMessage.setText("Для подтверждения адреса электронной почты, перейдите по следующей ссылке:\n"
-                + "http://localhost:8080/api/v1/auth/confirm?token=" + confirmationToken);
+                + "http://localhost:8080/api/v1/auth/email?token=" + confirmationToken);
         emailSender.send(mailMessage);
     }
 }

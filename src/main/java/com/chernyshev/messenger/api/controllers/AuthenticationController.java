@@ -41,14 +41,14 @@ public class AuthenticationController {
     private final EmailService emailService;
     private final TokenService tokenService;
     private final TokenRepository tokenRepository;
-    public final String REGISTER ="/register";
-    public final String LOGIN ="/login";
-    public final String EMAIL_CONFIRMATION ="/confirm";
-    public final String REFRESH_TOKEN = "/refresh-token";
-    public final String LOGOUT ="/logout";
+    public static final String REGISTER ="/register";
+    public static final String LOGIN ="/login";
+    public static final String EMAIL_CONFIRMATION ="/email";
+    public static final String REFRESH_TOKEN = "/refresh-token";
+    public static final String LOGOUT ="/logout";
 
     @PostMapping(REGISTER)
-    public ResponseEntity<TokenDto> register(@RequestBody @Valid RegisterDto request) {
+    public ResponseEntity<TokenDto> signup(@RequestBody @Valid RegisterDto request) {
         repository.findByUsername(request.getUsername())
                 .ifPresent(user->{
                     throw new IllegalStateException(String.format("Пользователь \"%s\" уже существует",request.getUsername()));
@@ -75,7 +75,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
     }
     @PostMapping(LOGIN)
-    public ResponseEntity<TokenDto> authenticate(@RequestBody @Valid AuthenticationDto request) {
+    public ResponseEntity<TokenDto> signin(@RequestBody @Valid AuthenticationDto request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),
@@ -120,13 +120,12 @@ public class AuthenticationController {
         }
     }
     @PostMapping(LOGOUT)
-    public ResponseEntity<String> logout(HttpServletRequest request) {
+    public ResponseEntity<String> signout(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         String jwt;
         jwt=authHeader.substring(7);
         String username=jwtService.extractUsername(jwt);
-        var user=repository.findByUsername(username).filter(UserEntity::isActive)
-                .orElseThrow(()->new UserDeactivatedException("Пользователь неактивен"));
+        repository.findByUsername(username).filter(UserEntity::isActive).orElseThrow(()->new UserDeactivatedException("Пользователь не найден"));
         var storedToken=tokenRepository.findByToken(jwt).orElse(null);
         if(storedToken!=null){
             storedToken.setExpired(true);

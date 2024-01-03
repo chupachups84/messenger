@@ -10,10 +10,9 @@ import com.chernyshev.messenger.api.services.TokenService;
 import com.chernyshev.messenger.store.models.UserEntity;
 import com.chernyshev.messenger.store.repositories.UserRepository;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,13 +28,15 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final TokenService tokenService;
+    private static final  String NO_PERMISSION_EXC="Нет прав доступа";
+    private static final  String USER_DEACT_EX="Пользователь неактивен";
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<InfoDto> info(Principal principal,@PathVariable Long id){
+    public ResponseEntity<InfoDto> info(@PathVariable Long id){
         var user = repository.findById(id)
                 .filter(UserEntity::isActive)
-                .orElseThrow(()->new UserDeactivatedException("Пользователь неактивен"));
+                .orElseThrow(()->new UserDeactivatedException(USER_DEACT_EX));
         return ResponseEntity.ok().body(
                 InfoDto.builder()
                         .firstname(user.getFirstname())
@@ -47,7 +48,7 @@ public class UserController {
                         .email(user.getEmail()).build()
         );
     }
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<TokenDto> edit(Principal principal,@PathVariable Long id,
             @RequestParam(value = "profile_privacy",required = false) Optional<Boolean> optionalProfilePrivacy,
             @RequestParam(value = "email",required = false) Optional<String >optionalNewEmail,
@@ -58,10 +59,12 @@ public class UserController {
             @RequestParam(value = "avatar_url",required = false) Optional<String> optionalAvatarUrl,
             @RequestParam(value = "status",required = false) Optional<String> optionalStatus) {
 
-        var user = repository.findByUsername(principal.getName())
-                .filter(UserEntity::isActive)
-                .filter(u -> u.getId().equals(id) )
-                .orElseThrow(()-> new NoPermissionException("Пользователь неактивен или нет прав доступа"));
+        var user = repository.findById(id)
+                .filter(UserEntity::isActive).orElseThrow(()->new UserDeactivatedException(USER_DEACT_EX));
+
+        if(!user.getUsername().equals(principal.getName())) throw new NoPermissionException(NO_PERMISSION_EXC);
+
+
 
         optionalFirstname.filter(firstname->!firstname.trim().isEmpty()).ifPresent(user::setFirstname);
         optionalLastname.filter(lastname->!lastname.trim().isEmpty()).ifPresent(user::setLastname);
@@ -72,23 +75,19 @@ public class UserController {
 
         optionalNewUsername.filter(newUsername->newUsername.trim().length()>=8)
                 .ifPresent(
-                        (username)->{
-                            repository.findByUsername(username).ifPresentOrElse(
-                                    (userEntity) ->{
+                        username-> repository.findByUsername(username).ifPresentOrElse(
+                                    userEntity ->{
                                         throw new IllegalStateException(String.format("Пользователь \"%s\" уже существует",userEntity.getUsername()));
                                     },
-                                    ()->{
-                                        user.setUsername(username);
-                                    }
-                            );
-                        }
+                                    ()-> user.setUsername(username)
+                            )
+
                 );
 
         optionalNewEmail.filter(newUsername-> !newUsername.trim().isEmpty())
                 .ifPresent(
-                        (email)->{
-                            repository.findByEmail(email).ifPresentOrElse(
-                                    (userEntity) ->{
+                        email-> repository.findByEmail(email).ifPresentOrElse(
+                                    userEntity ->{
                                         throw new IllegalStateException(String.format("Почта \"%s\" занята",userEntity.getEmail()));
                                     },
                                     ()->{
@@ -97,8 +96,8 @@ public class UserController {
                                         user.setEmailConfirmationToken(emailConfirmationToken);
                                         emailService.sendEmailConfirmationEmail(user.getEmail(), emailConfirmationToken);
                                     }
-                            );
-                        }
+                            )
+
                 );
 
         return ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
@@ -106,10 +105,10 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ResponseEntity<TokenDto> changePassword(Principal principal,@PathVariable Long id ,@RequestBody @Valid PasswordDto request){
-        var user = repository.findByUsername(principal.getName())
-                .filter(UserEntity::isActive)
-                .filter(u -> u.getId().equals(id) )
-                .orElseThrow(()-> new NoPermissionException("Пользователь неактивен или нет прав доступа"));
+        var user = repository.findById(id)
+                .filter(UserEntity::isActive).orElseThrow(()->new UserDeactivatedException(USER_DEACT_EX));
+
+        if(!user.getUsername().equals(principal.getName())) throw new NoPermissionException(NO_PERMISSION_EXC);
 
         if(!passwordEncoder.matches(request.getOldPassword(),user.getPassword()))
             throw new IllegalStateException("Неправильный пароль");
@@ -121,21 +120,17 @@ public class UserController {
     }
     @DeleteMapping("/{id}")
     public ResponseEntity<TokenDto> delete(Principal principal,@PathVariable Long id) {
-        var user = repository.findByUsername(principal.getName())
-                .filter(UserEntity::isActive)
-                .filter(u -> u.getId().equals(id) )
-                .orElseThrow(()-> new NoPermissionException("Пользователь неактивен или нет прав доступа"));
+        var user = repository.findById(id)
+                .filter(UserEntity::isActive).orElseThrow(()->new UserDeactivatedException(USER_DEACT_EX));
+        if(!user.getUsername().equals(principal.getName())) throw new NoPermissionException(NO_PERMISSION_EXC);
         user.setActive(false);
         return ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
     }
-    @PatchMapping("/{id}")
+    @PostMapping("/{id}")
     public ResponseEntity<TokenDto> recover(Principal principal,@PathVariable Long id) {
-        var user = repository.findDeactivatedByUsername(principal.getName())
-                .filter(u -> u.getId().equals(id) )
-                .orElseThrow(()-> new NoPermissionException("Нет прав доступа"));
+        var user = repository.findDeactivatedById(id).orElseThrow(()-> new UsernameNotFoundException("Пользователь не найден"));
+        if(!user.getUsername().equals(principal.getName())) throw new NoPermissionException(NO_PERMISSION_EXC);
         user.setActive(true);
         return ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
     }
-
-
 }
