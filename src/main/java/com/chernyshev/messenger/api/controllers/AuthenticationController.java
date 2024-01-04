@@ -3,9 +3,9 @@ package com.chernyshev.messenger.api.controllers;
 import com.chernyshev.messenger.api.dtos.AuthenticationDto;
 import com.chernyshev.messenger.api.dtos.RegisterDto;
 import com.chernyshev.messenger.api.dtos.TokenDto;
-import com.chernyshev.messenger.api.services.EmailService;
 import com.chernyshev.messenger.api.exceptions.myExceptions.InvalidTokenException;
 import com.chernyshev.messenger.api.exceptions.myExceptions.UserDeactivatedException;
+import com.chernyshev.messenger.api.services.EmailService;
 import com.chernyshev.messenger.api.services.JwtService;
 import com.chernyshev.messenger.api.services.TokenService;
 import com.chernyshev.messenger.store.models.Role;
@@ -31,7 +31,6 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/auth")
 public class AuthenticationController {
 
     private final UserRepository repository;
@@ -41,14 +40,14 @@ public class AuthenticationController {
     private final EmailService emailService;
     private final TokenService tokenService;
     private final TokenRepository tokenRepository;
-    public static final String REGISTER ="/register";
-    public static final String LOGIN ="/login";
-    public static final String EMAIL_CONFIRMATION ="/email";
-    public static final String REFRESH_TOKEN = "/refresh-token";
-    public static final String LOGOUT ="/logout";
+    public static final String REGISTER ="/api/v1/auth/register";
+    public static final String LOGIN ="/api/v1/auth/login";
+    public static final String EMAIL_CONFIRMATION ="/api/v1/auth/email-confirm";
+    public static final String REFRESH_TOKEN = "/api/v1/auth/token-refresh";
+    public static final String LOGOUT ="/api/v1/auth/logout";
 
     @PostMapping(REGISTER)
-    public ResponseEntity<TokenDto> signup(@RequestBody @Valid RegisterDto request) {
+    public ResponseEntity<TokenDto> signUp(@RequestBody @Valid RegisterDto request) {
         repository.findByUsername(request.getUsername())
                 .ifPresent(user->{
                     throw new IllegalStateException(String.format("Пользователь \"%s\" уже существует",request.getUsername()));
@@ -75,7 +74,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
     }
     @PostMapping(LOGIN)
-    public ResponseEntity<TokenDto> signin(@RequestBody @Valid AuthenticationDto request) {
+    public ResponseEntity<TokenDto> signIn(@RequestBody @Valid AuthenticationDto request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),
@@ -117,15 +116,13 @@ public class AuthenticationController {
                 response.setContentType("application/json");
                 objectMapper.writeValue(response.getWriter(), authResponse);
             }
+            //todo выкидывать 400 ошибку или что-то в этом роде когда токен невалиден
         }
     }
     @PostMapping(LOGOUT)
-    public ResponseEntity<String> signout(HttpServletRequest request) {
+    public ResponseEntity<String> signOut(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
-        String jwt;
-        jwt=authHeader.substring(7);
-        String username=jwtService.extractUsername(jwt);
-        repository.findByUsername(username).filter(UserEntity::isActive).orElseThrow(()->new UserDeactivatedException("Пользователь не найден"));
+        String jwt=authHeader.substring(7);
         var storedToken=tokenRepository.findByToken(jwt).orElse(null);
         if(storedToken!=null){
             storedToken.setExpired(true);

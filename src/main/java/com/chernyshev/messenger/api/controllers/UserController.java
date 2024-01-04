@@ -3,9 +3,8 @@ package com.chernyshev.messenger.api.controllers;
 import com.chernyshev.messenger.api.dtos.InfoDto;
 import com.chernyshev.messenger.api.dtos.PasswordDto;
 import com.chernyshev.messenger.api.dtos.TokenDto;
-import com.chernyshev.messenger.api.exceptions.myExceptions.NoPermissionException;
-import com.chernyshev.messenger.api.services.EmailService;
 import com.chernyshev.messenger.api.exceptions.myExceptions.UserDeactivatedException;
+import com.chernyshev.messenger.api.services.EmailService;
 import com.chernyshev.messenger.api.services.TokenService;
 import com.chernyshev.messenger.store.models.UserEntity;
 import com.chernyshev.messenger.store.repositories.UserRepository;
@@ -22,21 +21,26 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/users")
 public class UserController {
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final TokenService tokenService;
-    private static final  String NO_PERMISSION_EXC="Нет прав доступа";
-    private static final  String USER_DEACT_EX="Пользователь неактивен";
+    private static final  String USER_DEACTIVATE_EX ="Пользователь не найден";
+    //TODO-> заменить exception на NotFound 404
+
+    public static final  String GET_USER_INFO ="/api/v1/users/{username}";
+    public static final  String EDIT_USER_INFO ="/api/v1/users/edit";
+    public static final  String CHANGE_USER_PASSWORD ="/api/v1/users/password-change";
+    public static final  String DELETE_USER_ACCOUNT ="/api/v1/users/account-delete";
+    public static final  String RECOVER_USER_ACCOUNT ="/api/v1/users/account-recover";
 
 
-    @GetMapping("/{id}")
-    public ResponseEntity<InfoDto> info(@PathVariable Long id){
-        var user = repository.findById(id)
+    @GetMapping(GET_USER_INFO)
+    public ResponseEntity<InfoDto> info(@PathVariable String username){
+        var user = repository.findByUsername(username)
                 .filter(UserEntity::isActive)
-                .orElseThrow(()->new UserDeactivatedException(USER_DEACT_EX));
+                .orElseThrow(()->new UserDeactivatedException(USER_DEACTIVATE_EX));
         return ResponseEntity.ok().body(
                 InfoDto.builder()
                         .firstname(user.getFirstname())
@@ -48,8 +52,8 @@ public class UserController {
                         .email(user.getEmail()).build()
         );
     }
-    @PatchMapping("/{id}")
-    public ResponseEntity<TokenDto> edit(Principal principal,@PathVariable Long id,
+    @PatchMapping(EDIT_USER_INFO)
+    public ResponseEntity<TokenDto> editInfo(Principal principal,
             @RequestParam(value = "profile_privacy",required = false) Optional<Boolean> optionalProfilePrivacy,
             @RequestParam(value = "email",required = false) Optional<String >optionalNewEmail,
             @RequestParam(value = "username",required = false) Optional<String> optionalNewUsername,
@@ -59,11 +63,8 @@ public class UserController {
             @RequestParam(value = "avatar_url",required = false) Optional<String> optionalAvatarUrl,
             @RequestParam(value = "status",required = false) Optional<String> optionalStatus) {
 
-        var user = repository.findById(id)
-                .filter(UserEntity::isActive).orElseThrow(()->new UserDeactivatedException(USER_DEACT_EX));
-
-        if(!user.getUsername().equals(principal.getName())) throw new NoPermissionException(NO_PERMISSION_EXC);
-
+        var user = repository.findByUsername(principal.getName())
+                .filter(UserEntity::isActive).orElseThrow(()->new UserDeactivatedException(USER_DEACTIVATE_EX));
 
 
         optionalFirstname.filter(firstname->!firstname.trim().isEmpty()).ifPresent(user::setFirstname);
@@ -103,12 +104,10 @@ public class UserController {
         return ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<TokenDto> changePassword(Principal principal,@PathVariable Long id ,@RequestBody @Valid PasswordDto request){
-        var user = repository.findById(id)
-                .filter(UserEntity::isActive).orElseThrow(()->new UserDeactivatedException(USER_DEACT_EX));
-
-        if(!user.getUsername().equals(principal.getName())) throw new NoPermissionException(NO_PERMISSION_EXC);
+    @PatchMapping(CHANGE_USER_PASSWORD)
+    public ResponseEntity<TokenDto> changePassword(Principal principal,@RequestBody @Valid PasswordDto request){
+        var user = repository.findByUsername(principal.getName())
+                .filter(UserEntity::isActive).orElseThrow(()->new UserDeactivatedException(USER_DEACTIVATE_EX));
 
         if(!passwordEncoder.matches(request.getOldPassword(),user.getPassword()))
             throw new IllegalStateException("Неправильный пароль");
@@ -118,18 +117,16 @@ public class UserController {
 
         return ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
     }
-    @DeleteMapping("/{id}")
-    public ResponseEntity<TokenDto> delete(Principal principal,@PathVariable Long id) {
-        var user = repository.findById(id)
-                .filter(UserEntity::isActive).orElseThrow(()->new UserDeactivatedException(USER_DEACT_EX));
-        if(!user.getUsername().equals(principal.getName())) throw new NoPermissionException(NO_PERMISSION_EXC);
+    @DeleteMapping(DELETE_USER_ACCOUNT)
+    public ResponseEntity<TokenDto> delete(Principal principal) {
+        var user = repository.findByUsername(principal.getName())
+                .filter(UserEntity::isActive).orElseThrow(()->new UserDeactivatedException(USER_DEACTIVATE_EX));
         user.setActive(false);
         return ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
     }
-    @PostMapping("/{id}")
-    public ResponseEntity<TokenDto> recover(Principal principal,@PathVariable Long id) {
-        var user = repository.findDeactivatedById(id).orElseThrow(()-> new UsernameNotFoundException("Пользователь не найден"));
-        if(!user.getUsername().equals(principal.getName())) throw new NoPermissionException(NO_PERMISSION_EXC);
+    @PostMapping(RECOVER_USER_ACCOUNT)
+    public ResponseEntity<TokenDto> recover(Principal principal) {
+        var user = repository.findDeactivatedByUsername(principal.getName()).orElseThrow(()-> new UsernameNotFoundException(USER_DEACTIVATE_EX));
         user.setActive(true);
         return ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
     }

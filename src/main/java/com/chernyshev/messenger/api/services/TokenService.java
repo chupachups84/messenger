@@ -5,7 +5,6 @@ import com.chernyshev.messenger.store.models.TokenEntity;
 import com.chernyshev.messenger.store.models.TokenType;
 import com.chernyshev.messenger.store.models.UserEntity;
 import com.chernyshev.messenger.store.repositories.TokenRepository;
-import com.chernyshev.messenger.store.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class TokenService {
     private final TokenRepository tokenRepository;
-    private final UserRepository repository;
     private final JwtService jwtService;
     public void saveUserToken(UserEntity user, String jwtToken) {
         var token = TokenEntity.builder()
@@ -23,17 +21,19 @@ public class TokenService {
                 .expired(false)
                 .revoked(false)
                 .build();
-        tokenRepository.save(token);
+        tokenRepository.saveAndFlush(token);
     }
     public void revokeAllUserToken(UserEntity user){
-        var validUserTokens = tokenRepository.findAllValidTokensByUser(user.getId());
-        if(validUserTokens.isEmpty())
-            return;
-        validUserTokens.forEach(t->{
-                    t.setExpired(true);
-                    t.setRevoked(true);
-                }
-        );
+        tokenRepository.findAllValidTokensByUser(user.getId())
+                .filter(tokens->!tokens.isEmpty())
+                    .ifPresent(
+                        tokenList->tokenList.forEach(
+                                t->{
+                                    t.setExpired(true);
+                                    t.setRevoked(true);
+                                }
+                        )
+                );
     }
 
 
