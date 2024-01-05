@@ -3,15 +3,14 @@ package com.chernyshev.messenger.api.controllers;
 import com.chernyshev.messenger.api.dtos.InfoDto;
 import com.chernyshev.messenger.api.dtos.PasswordDto;
 import com.chernyshev.messenger.api.dtos.TokenDto;
-import com.chernyshev.messenger.api.exceptions.myExceptions.UserDeactivatedException;
+import com.chernyshev.messenger.api.exceptions.BadRequestException;
+import com.chernyshev.messenger.api.exceptions.NotFoundException;
 import com.chernyshev.messenger.api.services.EmailService;
 import com.chernyshev.messenger.api.services.TokenService;
 import com.chernyshev.messenger.store.models.UserEntity;
 import com.chernyshev.messenger.store.repositories.UserRepository;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,8 +25,8 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final TokenService tokenService;
-    private static final  String USER_DEACTIVATE_EX ="Пользователь не найден";
-    //TODO-> заменить exception на NotFound 404
+    private static final  String NOT_FOUND_MESSAGE ="Пользователь не найден";
+
 
     public static final  String GET_USER_INFO ="/api/v1/users/{username}";
     public static final  String EDIT_USER_INFO ="/api/v1/users/edit";
@@ -40,7 +39,7 @@ public class UserController {
     public ResponseEntity<InfoDto> info(@PathVariable String username){
         var user = repository.findByUsername(username)
                 .filter(UserEntity::isActive)
-                .orElseThrow(()->new UserDeactivatedException(USER_DEACTIVATE_EX));
+                .orElseThrow(()->new NotFoundException(NOT_FOUND_MESSAGE));
         return ResponseEntity.ok().body(
                 InfoDto.builder()
                         .firstname(user.getFirstname())
@@ -54,7 +53,8 @@ public class UserController {
     }
     @PatchMapping(EDIT_USER_INFO)
     public ResponseEntity<TokenDto> editInfo(Principal principal,
-            @RequestParam(value = "profile_privacy",required = false) Optional<Boolean> optionalProfilePrivacy,
+            @RequestParam(value = "messages_friend_only",required = false) Optional<Boolean> optionalReceiveMessagesFriendOnly,
+            @RequestParam(value = "hide_friends_list",required = false) Optional<Boolean> optionalFriendsListHidden,
             @RequestParam(value = "email",required = false) Optional<String >optionalNewEmail,
             @RequestParam(value = "username",required = false) Optional<String> optionalNewUsername,
             @RequestParam(value = "first_name",required = false) Optional<String> optionalFirstname,
@@ -64,7 +64,7 @@ public class UserController {
             @RequestParam(value = "status",required = false) Optional<String> optionalStatus) {
 
         var user = repository.findByUsername(principal.getName())
-                .filter(UserEntity::isActive).orElseThrow(()->new UserDeactivatedException(USER_DEACTIVATE_EX));
+                .filter(UserEntity::isActive).orElseThrow(()->new NotFoundException(NOT_FOUND_MESSAGE));
 
 
         optionalFirstname.filter(firstname->!firstname.trim().isEmpty()).ifPresent(user::setFirstname);
@@ -72,13 +72,18 @@ public class UserController {
         optionalBio.filter(bio->!bio.trim().isEmpty()).ifPresent(user::setBio);
         optionalAvatarUrl.filter(avatarUrl->!avatarUrl.trim().isEmpty()).ifPresent(user::setAvatarUrl);
         optionalStatus.filter(status->!status.trim().isEmpty()).ifPresent(user::setStatus);
-        optionalProfilePrivacy.ifPresent(user::setPrivateProfile);
+        optionalReceiveMessagesFriendOnly.ifPresent(user::setReceiveMessagesFriendOnly);
+        optionalFriendsListHidden.ifPresent(user::setFriendsListHidden);
 
         optionalNewUsername.filter(newUsername->newUsername.trim().length()>=8)
                 .ifPresent(
                         username-> repository.findByUsername(username).ifPresentOrElse(
                                     userEntity ->{
-                                        throw new IllegalStateException(String.format("Пользователь \"%s\" уже существует",userEntity.getUsername()));
+                                        throw new BadRequestException(
+                                                String.format(
+                                                        "Пользователь \"%s\" уже существует",userEntity.getUsername()
+                                                )
+                                        );
                                     },
                                     ()-> user.setUsername(username)
                             )
@@ -89,13 +94,17 @@ public class UserController {
                 .ifPresent(
                         email-> repository.findByEmail(email).ifPresentOrElse(
                                     userEntity ->{
-                                        throw new IllegalStateException(String.format("Почта \"%s\" занята",userEntity.getEmail()));
+                                        throw new BadRequestException(
+                                                String.format(
+                                                        "Почта \"%s\" занята",userEntity.getEmail()
+                                                )
+                                        );
                                     },
                                     ()->{
                                         user.setEmail(email);
-                                        String emailConfirmationToken = UUID.randomUUID().toString();
-                                        user.setEmailConfirmationToken(emailConfirmationToken);
-                                        emailService.sendEmailConfirmationEmail(user.getEmail(), emailConfirmationToken);
+                                        String emailToken = UUID.randomUUID().toString();
+                                        user.setEmailToken(emailToken);
+                                        emailService.sendEmailConfirmationEmail(user.getEmail(), emailToken);
                                     }
                             )
 
@@ -105,14 +114,14 @@ public class UserController {
     }
 
     @PatchMapping(CHANGE_USER_PASSWORD)
-    public ResponseEntity<TokenDto> changePassword(Principal principal,@RequestBody @Valid PasswordDto request){
+    public ResponseEntity<TokenDto> changePassword(Principal principal,@RequestBody PasswordDto request){
         var user = repository.findByUsername(principal.getName())
-                .filter(UserEntity::isActive).orElseThrow(()->new UserDeactivatedException(USER_DEACTIVATE_EX));
+                .filter(UserEntity::isActive).orElseThrow(()->new NotFoundException(NOT_FOUND_MESSAGE));
 
         if(!passwordEncoder.matches(request.getOldPassword(),user.getPassword()))
-            throw new IllegalStateException("Неправильный пароль");
+            throw new BadRequestException("Неправильный пароль");
         if(!request.getNewPassword().equals(request.getConfirmPassword()))
-            throw new IllegalStateException("Пароли не совпадают");
+            throw new BadRequestException("Пароли не совпадают");
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
 
         return ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
@@ -120,13 +129,15 @@ public class UserController {
     @DeleteMapping(DELETE_USER_ACCOUNT)
     public ResponseEntity<TokenDto> delete(Principal principal) {
         var user = repository.findByUsername(principal.getName())
-                .filter(UserEntity::isActive).orElseThrow(()->new UserDeactivatedException(USER_DEACTIVATE_EX));
+                .filter(UserEntity::isActive).orElseThrow(()->new NotFoundException(NOT_FOUND_MESSAGE));
         user.setActive(false);
         return ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
     }
     @PostMapping(RECOVER_USER_ACCOUNT)
     public ResponseEntity<TokenDto> recover(Principal principal) {
-        var user = repository.findDeactivatedByUsername(principal.getName()).orElseThrow(()-> new UsernameNotFoundException(USER_DEACTIVATE_EX));
+        var user = repository.findDeactivatedByUsername(principal.getName()).orElseThrow(
+                ()-> new NotFoundException(NOT_FOUND_MESSAGE)
+        );
         user.setActive(true);
         return ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
     }

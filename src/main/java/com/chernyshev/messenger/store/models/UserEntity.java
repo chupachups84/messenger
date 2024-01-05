@@ -1,5 +1,6 @@
 package com.chernyshev.messenger.store.models;
 
+import com.chernyshev.messenger.store.models.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -15,7 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "_user")
+@Table(name = "users")
 public class UserEntity implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,13 +28,14 @@ public class UserEntity implements UserDetails {
     @Column(unique = true)
     private String username;
     private String password;
-    private String emailConfirmationToken;
-
+    private String emailToken;
     private String bio;
     private String status;
     private String avatarUrl;
     @Builder.Default
-    private boolean privateProfile = false;
+    private boolean isReceiveMessagesFriendOnly = false;
+    @Builder.Default
+    private boolean isFriendsListHidden = false;
     @Builder.Default
     private boolean isActive = true;
 
@@ -41,6 +43,16 @@ public class UserEntity implements UserDetails {
     private Role role;
     @OneToMany(mappedBy = "user")
     private List<TokenEntity> tokens;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "friends",
+            joinColumns = {@JoinColumn(name="user1_id",referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "user2_id",referencedColumnName = "id")}
+    )
+    private List<UserEntity> friends;
+
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));

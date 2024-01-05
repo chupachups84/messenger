@@ -2,7 +2,7 @@ package com.chernyshev.messenger.api.services;
 
 import com.chernyshev.messenger.api.dtos.TokenDto;
 import com.chernyshev.messenger.store.models.TokenEntity;
-import com.chernyshev.messenger.store.models.TokenType;
+import com.chernyshev.messenger.store.models.enums.TokenType;
 import com.chernyshev.messenger.store.models.UserEntity;
 import com.chernyshev.messenger.store.repositories.TokenRepository;
 import lombok.RequiredArgsConstructor;

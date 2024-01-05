@@ -3,20 +3,21 @@ package com.chernyshev.messenger.api.controllers;
 import com.chernyshev.messenger.api.dtos.AuthenticationDto;
 import com.chernyshev.messenger.api.dtos.RegisterDto;
 import com.chernyshev.messenger.api.dtos.TokenDto;
-import com.chernyshev.messenger.api.exceptions.myExceptions.InvalidTokenException;
-import com.chernyshev.messenger.api.exceptions.myExceptions.UserDeactivatedException;
+import com.chernyshev.messenger.api.exceptions.BadRequestException;
+import com.chernyshev.messenger.api.exceptions.NotFoundException;
+import com.chernyshev.messenger.api.exceptions.UnauthorizedException;
 import com.chernyshev.messenger.api.services.EmailService;
 import com.chernyshev.messenger.api.services.JwtService;
 import com.chernyshev.messenger.api.services.TokenService;
-import com.chernyshev.messenger.store.models.Role;
+import com.chernyshev.messenger.store.models.enums.Role;
 import com.chernyshev.messenger.store.models.UserEntity;
 import com.chernyshev.messenger.store.repositories.TokenRepository;
 import com.chernyshev.messenger.store.repositories.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class AuthenticationController {
 
     private final UserRepository repository;
@@ -47,17 +49,17 @@ public class AuthenticationController {
     public static final String LOGOUT ="/api/v1/auth/logout";
 
     @PostMapping(REGISTER)
-    public ResponseEntity<TokenDto> signUp(@RequestBody @Valid RegisterDto request) {
+    public ResponseEntity<TokenDto> signUp(@RequestBody RegisterDto request) {
         repository.findByUsername(request.getUsername())
                 .ifPresent(user->{
-                    throw new IllegalStateException(String.format("Пользователь \"%s\" уже существует",request.getUsername()));
+                    throw new BadRequestException(String.format("Пользователь \"%s\" уже существует",request.getUsername()));
                 });
         repository.findByEmail(request.getEmail())
                 .ifPresent(user->{
-                    throw new IllegalStateException(String.format("Почта \"%s\" занята",request.getEmail()));
+                    throw new BadRequestException(String.format("Почта \"%s\" занята",request.getEmail()));
                 });
 
-        String emailConfirmationToken = UUID.randomUUID().toString();
+        String emailToken = UUID.randomUUID().toString();
 
         UserEntity user = UserEntity.builder()
                 .firstname(request.getFirstname())
@@ -66,31 +68,30 @@ public class AuthenticationController {
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.USER)
-                .emailConfirmationToken(emailConfirmationToken)
+                .emailToken(emailToken)
                 .build();
 
-        emailService.sendEmailConfirmationEmail(user.getEmail(), emailConfirmationToken);
+        emailService.sendEmailConfirmationEmail(user.getEmail(), emailToken);
 
         return ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
     }
     @PostMapping(LOGIN)
-    public ResponseEntity<TokenDto> signIn(@RequestBody @Valid AuthenticationDto request) {
+    public ResponseEntity<TokenDto> signIn(@RequestBody AuthenticationDto request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),
                         request.getPassword()
                 )
         );
-        var user = repository.findByUsername(request.getUsername())
-                .filter(UserEntity::isActive).orElseThrow(()->new UserDeactivatedException("Пользователь неактивен"));
+       var user = repository.findByUsername(request.getUsername())
+                .filter(UserEntity::isActive).orElseThrow(()->new NotFoundException("Пользователь не найден"));
         tokenService.revokeAllUserToken(user);
-
         return  ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
     }
     @PatchMapping(EMAIL_CONFIRMATION)
-    public ResponseEntity<String> confirm(@RequestParam String token) throws InvalidTokenException {
-        var user = repository.findByEmailConfirmationToken(token).orElseThrow(()->new InvalidTokenException("Некорректный токен подтверждения"));
-        user.setEmailConfirmationToken(null);
+    public ResponseEntity<String> confirm(@RequestParam String token) {
+        var user = repository.findByEmailToken(token).orElseThrow(()->new UnauthorizedException("Некорректный токен подтверждения"));
+        user.setEmailToken(null);
         repository.saveAndFlush(user);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body("{\"message\":\"Почта успешно подтверждена\"}");
     }
@@ -103,7 +104,8 @@ public class AuthenticationController {
         refreshToken=authHeader.substring(7);
         username=jwtService.extractUsername(refreshToken);
         if(username!=null){
-            var user = repository.findByUsername(username).orElseThrow();
+            var user = repository.findByUsername(username)
+                    .orElseThrow(()->new NotFoundException(String.format("Пользователь \"%s\" не найден",username)));
             if(jwtService.isTokenValid(refreshToken,user)){
                 var accessToken = jwtService.generateToken(user);
                 tokenService.revokeAllUserToken(user);
@@ -116,7 +118,7 @@ public class AuthenticationController {
                 response.setContentType("application/json");
                 objectMapper.writeValue(response.getWriter(), authResponse);
             }
-            //todo выкидывать 400 ошибку или что-то в этом роде когда токен невалиден
+            else throw new UnauthorizedException("Токен невалиден");
         }
     }
     @PostMapping(LOGOUT)

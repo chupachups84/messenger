@@ -1,5 +1,6 @@
 package com.chernyshev.messenger.store.models;
 
+import com.chernyshev.messenger.store.models.enums.TokenType;
 import jakarta.persistence.*;
 import lombok.*;
 

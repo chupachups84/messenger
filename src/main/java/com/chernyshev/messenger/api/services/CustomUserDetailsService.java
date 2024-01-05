@@ -1,5 +1,6 @@
 package com.chernyshev.messenger.api.services;
 
+import com.chernyshev.messenger.api.exceptions.UnauthorizedException;
 import com.chernyshev.messenger.store.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -18,7 +19,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException{
         var user =userRepository.findByUsername(username)
-                .orElseThrow(()-> new UsernameNotFoundException("Неверный логин или пароль"));
+                .orElseThrow(()-> new UnauthorizedException("Неверный логин или пароль"));
         return new User(
                 user.getUsername(),
                 user.getPassword(),

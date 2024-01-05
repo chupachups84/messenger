@@ -1,48 +1,73 @@
 package com.chernyshev.messenger.api.controllers;
 
-import com.chernyshev.messenger.api.dtos.FriendResponse;
-import com.chernyshev.messenger.api.services.FriendService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import com.chernyshev.messenger.api.dtos.InfoDto;
+import com.chernyshev.messenger.api.exceptions.ForbiddenException;
+import com.chernyshev.messenger.api.exceptions.NotFoundException;
+import com.chernyshev.messenger.store.models.UserEntity;
+import com.chernyshev.messenger.store.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1")
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/friends")
 public class FriendController {
-    private final FriendService friendService;
+    private final UserRepository repository;
 
-    @GetMapping("/friends")
-    public ResponseEntity<List<FriendResponse>> getMyFriends(Principal principal) {
-        List<FriendResponse> responseList = friendService.getFriends(principal.getName());
-        return ResponseEntity.ok(responseList);
+    @GetMapping()
+    public ResponseEntity<List<InfoDto>> getFriendList(Principal principal, @RequestParam(value = "username",required = false) Optional<String> optionalUsername){
+        final List<InfoDto> infoDtoList = new ArrayList<>();
+        optionalUsername.ifPresentOrElse(
+                s -> repository.findByUsername(s).filter(UserEntity::isActive).ifPresentOrElse(
+                        userEntity -> {
+                            if(userEntity.isFriendsListHidden())
+                                throw new ForbiddenException(
+                                        String.format("Пользователь \"%s\" скрыл список друзей",s)
+                                );
+                            repository.getFriends(s)
+                                    .ifPresent(
+                                            friendList-> infoDtoList.addAll(
+                                                    friendList.stream().map(
+                                                            friend-> InfoDto.builder()
+                                                                    .firstname(friend.getFirstname())
+                                                                    .lastname(friend.getLastname())
+                                                                    .username(friend.getUsername())
+                                                                    .email(friend.getEmail())
+                                                                    .avatarUrl(friend.getAvatarUrl())
+                                                                    .bio(friend.getBio())
+                                                                    .status(friend.getStatus()).build()).toList()
+                                            )
+                                    );
+                        },
+                        ()->{
+                            throw new NotFoundException(String.format("Пользователь с \"%s\" не найден",s));
+                        }
+                ),
+                ()-> repository.getFriends(principal.getName())
+                        .ifPresent(
+                                friendList-> infoDtoList.addAll(
+                                        friendList.stream().map(
+                                            friend-> InfoDto.builder()
+                                                    .firstname(friend.getFirstname())
+                                                    .lastname(friend.getLastname())
+                                                    .username(friend.getUsername())
+                                                    .email(friend.getEmail())
+                                                    .avatarUrl(friend.getAvatarUrl())
+                                                    .bio(friend.getBio())
+                                                    .status(friend.getStatus()).build()).toList()
+                                )
+                        )
+        );
+        return ResponseEntity.ok().body(infoDtoList);
     }
-
-    @GetMapping("/{id}/friends")
-    public ResponseEntity<List<FriendResponse>> getUserFriends(@PathVariable Long id,Principal principal) {
-        List<FriendResponse> responseList = friendService.getUserFriends(id, principal.getName());
-        return ResponseEntity.ok(responseList);
-    }
-
-    @PostMapping("/{id}")
-    public ResponseEntity<String> addFriend(@PathVariable Long id, Principal principal)  {
-        friendService.sendFriendRequest(principal.getName(),id);
-        return ResponseEntity.ok().build();
-    }
-
-    @DeleteMapping("/{id}")
-    public void deleteFriend(@PathVariable Long id, Principal principal){
-        friendService.deleteFriend(principal.getName(),id);
+    @PostMapping()
+    public ResponseEntity<Object> addToFriends(Principal principal, @RequestParam(value = "username",required = true) Optional<String> optionalUsername){
+        return ResponseEntity.ok();
     }
 }
