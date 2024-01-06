@@ -11,7 +11,6 @@ import com.chernyshev.messenger.store.repositories.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.socket.*;
 
 import java.io.IOException;
@@ -20,7 +19,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RequiredArgsConstructor
-@Slf4j
 public class CustomWebSocketHandler implements WebSocketHandler {
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
