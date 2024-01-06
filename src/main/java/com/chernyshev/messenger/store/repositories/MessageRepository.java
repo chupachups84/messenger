@@ -10,11 +10,11 @@ import java.util.List;
 @Repository
 public interface MessageRepository extends JpaRepository<MessageEntity,Long> {
     @Query("""
-            SELECT m from MessageEntity m WHERE 
+            SELECT m from MessageEntity m WHERE
             m.receiver=:receiver and m.sender=:sender
-            or 
+            or
             m.receiver=:sender and m.sender=:receiver
-            order by m.sentAt asc 
+            order by m.sentAt asc
             """)
     List<MessageEntity> findBySenderAndReceiver(UserEntity sender, UserEntity receiver);
 }

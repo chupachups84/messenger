@@ -19,19 +19,22 @@ public interface UserRepository extends JpaRepository<UserEntity,Long> {
     Optional<UserEntity> findByEmailToken(String token);
 
     @Query("""
-            select u.friends from UserEntity u 
-            JOIN u.friends f 
-            where u.username = :username OR f.username=:username
-            ORDER BY f.lastname ASC 
+    select u.friends from UserEntity u
+    join u.friends v
+    where u.username=:username
+    union
+    select u from UserEntity u
+    join u.friends v
+    where v.username=:username
     """)
-    Optional<List<UserEntity>> getFriends(String username);
+    Optional<List<UserEntity>> getFriendList(String username);
     @Query("""
             SELECT CASE WHEN COUNT(f) > 0 THEN true ELSE false END FROM UserEntity u
             JOIN u.friends f
             WHERE (u.username = :username1 AND f.username = :username2) OR
             (u.username = :username2 AND f.username = :username1)
     """)
-    boolean areFriends(String username1,String username2);
+    boolean findFriendshipByUsername1AndUsername2(String username1, String username2);
 
 
 }

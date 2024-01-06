@@ -81,7 +81,7 @@ public class UserController {
                                     userEntity ->{
                                         throw new BadRequestException(
                                                 String.format(
-                                                        "Пользователь \"%s\" уже существует",userEntity.getUsername()
+                                                        "Пользователь %s уже существует",userEntity.getUsername()
                                                 )
                                         );
                                     },
@@ -96,7 +96,7 @@ public class UserController {
                                     userEntity ->{
                                         throw new BadRequestException(
                                                 String.format(
-                                                        "Почта \"%s\" занята",userEntity.getEmail()
+                                                        "Почта %s занята",userEntity.getEmail()
                                                 )
                                         );
                                     },

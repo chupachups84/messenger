@@ -17,7 +17,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +31,6 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@Slf4j
 public class AuthenticationController {
 
     private final UserRepository repository;
@@ -52,11 +50,11 @@ public class AuthenticationController {
     public ResponseEntity<TokenDto> signUp(@RequestBody RegisterDto request) {
         repository.findByUsername(request.getUsername())
                 .ifPresent(user->{
-                    throw new BadRequestException(String.format("Пользователь \"%s\" уже существует",request.getUsername()));
+                    throw new BadRequestException(String.format("Пользователь %s уже существует",request.getUsername()));
                 });
         repository.findByEmail(request.getEmail())
                 .ifPresent(user->{
-                    throw new BadRequestException(String.format("Почта \"%s\" занята",request.getEmail()));
+                    throw new BadRequestException(String.format("Почта %s занята",request.getEmail()));
                 });
 
         String emailToken = UUID.randomUUID().toString();
@@ -105,7 +103,7 @@ public class AuthenticationController {
         username=jwtService.extractUsername(refreshToken);
         if(username!=null){
             var user = repository.findByUsername(username)
-                    .orElseThrow(()->new NotFoundException(String.format("Пользователь \"%s\" не найден",username)));
+                    .orElseThrow(()->new NotFoundException(String.format("Пользователь %s не найден",username)));
             if(jwtService.isTokenValid(refreshToken,user)){
                 var accessToken = jwtService.generateToken(user);
                 tokenService.revokeAllUserToken(user);
