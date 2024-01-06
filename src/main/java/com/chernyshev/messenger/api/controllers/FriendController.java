@@ -55,7 +55,7 @@ public class FriendController {
                 );
         if(principal.getName().equals(username))
             throw new BadRequestException("Нельзя добавить себя в друзья");
-        if(repository.findFriendshipByUsername1AndUsername2(principal.getName(), username))
+        if(repository.areFriends(principal.getName(), username))
             throw new BadRequestException("Пользователь уже в друзьях");
         user1.getFriends().add(user2);
         repository.saveAndFlush(user1);

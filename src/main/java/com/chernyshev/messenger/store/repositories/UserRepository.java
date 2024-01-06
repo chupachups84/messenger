@@ -34,7 +34,7 @@ public interface UserRepository extends JpaRepository<UserEntity,Long> {
             WHERE (u.username = :username1 AND f.username = :username2) OR
             (u.username = :username2 AND f.username = :username1)
     """)
-    boolean findFriendshipByUsername1AndUsername2(String username1, String username2);
+    boolean areFriends(String username1, String username2);
 
 
 }

@@ -20,7 +20,6 @@ public class TokenEntity {
     private TokenType tokenType;
     private boolean expired;
     private boolean revoked;
-
     @ManyToOne
     @JoinColumn(name = "user_id")
     private UserEntity user;
