@@ -34,7 +34,8 @@ public class CustomExceptionHandler {
     }
     @ExceptionHandler({
             FriendsListHiddenException.class,
-            MessageFriendOnlyException.class
+            MessageFriendOnlyException.class,
+            NoPermissionException.class
     })
     public ResponseEntity<ErrorDto> handleForbiddenException(Exception ex){
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
@@ -58,7 +59,7 @@ public class CustomExceptionHandler {
 
     }
     @ExceptionHandler(MailException.class)
-    public ResponseEntity<ErrorDto> handleMailException(MailException ex){
+    public ResponseEntity<ErrorDto> handleMailException(){
         return ResponseEntity.status(550).body(
                 ErrorDto.builder()
                         .error("Unroutable Sender Address")

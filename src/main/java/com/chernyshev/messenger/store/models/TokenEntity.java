@@ -15,13 +15,18 @@ public class TokenEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String token;
+
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private TokenType tokenType = TokenType.BEARER;
+
     private boolean expired;
+
     private boolean revoked;
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private UserEntity user;
 }

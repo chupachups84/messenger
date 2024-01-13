@@ -55,7 +55,6 @@ public class AuthenticationController {
                 .ifPresent(user->{
                     throw new EmailAlreadyExistException(String.format("Почта %s занята",request.getEmail()));
                 });
-
         String emailToken = UUID.randomUUID().toString();
         emailService.sendEmailConfirmationEmail(request.getEmail(), emailToken);
         return ResponseEntity.ok(
@@ -82,7 +81,7 @@ public class AuthenticationController {
                         request.getPassword()
                 )
         );
-       var user = repository.findByUsernameAndActive(request.getUsername(),true)
+       var user = repository.findByUsername(request.getUsername())
                .orElseThrow(()->new UserNotFoundException("Пользователь не найден"));
        tokenService.revokeAllUserToken(user);
        return  ResponseEntity.ok(

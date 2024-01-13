@@ -2,9 +2,12 @@ package com.chernyshev.messenger.api.controllers;
 
 import com.chernyshev.messenger.api.dtos.InfoDto;
 import com.chernyshev.messenger.api.exceptions.*;
+import com.chernyshev.messenger.store.models.FriendEntity;
 import com.chernyshev.messenger.store.models.UserEntity;
+import com.chernyshev.messenger.store.repositories.FriendRepository;
 import com.chernyshev.messenger.store.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +19,10 @@ import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class FriendController {
     private final UserRepository repository;
+    private final FriendRepository friendRepository;
     private static final String USER_NOT_FOUND="Пользователь %s не найден";
     public static final String GET_FRIEND_LIST="/api/v1/friends";
     public static final String ADD_FRIEND_TO_LIST="/api/v1/friends/add";
@@ -35,9 +40,11 @@ public class FriendController {
         if (!principal.getName().equals(targetUsername) && userEntity.isFriendsListHidden()) {
             throw new FriendsListHiddenException(String.format("Пользователь %s скрыл список друзей", targetUsername));
         }
-
-        repository.getFriendList(targetUsername).ifPresent(
-                friendList -> infoDtoList.addAll(friendList.stream().map(this::createInfoDto).toList())
+        friendRepository.findByUser1(userEntity).ifPresent(
+                friendList -> infoDtoList
+                        .addAll(
+                                friendList.stream().map(this::createInfoDto).toList()
+                        )
         );
         return ResponseEntity.ok().body(infoDtoList);
     }
@@ -46,7 +53,7 @@ public class FriendController {
         if(principal.getName().equals(username))
             throw new FriendRequestException("Нельзя добавить себя в друзья");
 
-        var user1=repository.findByUsernameAndActive(principal.getName(),true)
+        var user1=repository.findByUsername(principal.getName())
                 .orElseThrow(
                         ()->new UserNotFoundException(String.format(USER_NOT_FOUND,principal.getName()))
                 );
@@ -54,12 +61,20 @@ public class FriendController {
                 .orElseThrow(
                         ()->new UserNotFoundException(String.format(USER_NOT_FOUND,username))
                 );
-        if(repository.areFriends(principal.getName(), username))
+        if(friendRepository.existsByUser1AndUser2(user1, user2))
             throw new FriendRequestException("Пользователь уже в друзьях");
-        user1.getFriends().add(user2);
-        user2.getFriends().add(user1);
-        repository.saveAndFlush(user1);
-        repository.saveAndFlush(user2);
+        friendRepository.saveAndFlush(
+                FriendEntity.builder()
+                        .user1(user1)
+                        .user2(user2)
+                        .build()
+        );
+        friendRepository.saveAndFlush(
+                FriendEntity.builder()
+                        .user1(user2)
+                        .user2(user1)
+                        .build()
+        );
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
                 .body(String.format("{\"message\":\"Пользователь %s добавлен в друзья\"}",username));
     }

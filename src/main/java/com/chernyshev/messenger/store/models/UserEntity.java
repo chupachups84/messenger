@@ -26,21 +26,33 @@ public class UserEntity implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String lastname;
+
     private String firstname;
+
     @Column(unique = true)
     private String email;
+
     @Column(unique = true)
     private String username;
+
     private String password;
+
     private String emailToken;
+
     private String bio;
+
     private String status;
+
     private String avatarUrl;
+
     @Builder.Default
     private boolean isReceiveMessagesFriendOnly = false;
+
     @Builder.Default
     private boolean isFriendsListHidden = false;
+
     @Builder.Default
     private boolean isActive = true;
 
@@ -48,19 +60,6 @@ public class UserEntity implements UserDetails {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private Role role = Role.USER;
-    @Transient
-    @OneToMany(mappedBy = "user")
-    private List<TokenEntity> tokens;
-
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "friends",
-            joinColumns = {@JoinColumn(name="user1_id",referencedColumnName = "id")},
-            inverseJoinColumns = {@JoinColumn(name = "user2_id",referencedColumnName = "id")}
-    )
-    private List<UserEntity> friends;
-
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));

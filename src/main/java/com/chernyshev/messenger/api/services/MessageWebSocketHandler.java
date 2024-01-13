@@ -6,6 +6,7 @@ import com.chernyshev.messenger.api.exceptions.InternalServerException;
 import com.chernyshev.messenger.api.exceptions.MessageFriendOnlyException;
 import com.chernyshev.messenger.api.exceptions.UserNotFoundException;
 import com.chernyshev.messenger.store.models.MessageEntity;
+import com.chernyshev.messenger.store.repositories.FriendRepository;
 import com.chernyshev.messenger.store.repositories.MessageRepository;
 import com.chernyshev.messenger.store.repositories.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MessageWebSocketHandler implements WebSocketHandler {
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
+    private final FriendRepository friendRepository;
     private final Map<String, Map<String, WebSocketSession>> userSessions = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     private static final String USER_NOT_FOUND ="Пользователь %s не найден";
@@ -31,7 +33,7 @@ public class MessageWebSocketHandler implements WebSocketHandler {
         try {
             String senderUsername =session.getPrincipal().getName() ;
             String receiverUsername = getUsernameFromPath(session.getUri().getPath());
-            var sender = userRepository.findByUsernameAndActive(senderUsername,true)
+            var sender = userRepository.findByUsername(senderUsername)
                     .orElseThrow(
                             () -> new UserNotFoundException(String.format(USER_NOT_FOUND,senderUsername))
                     );
@@ -40,7 +42,7 @@ public class MessageWebSocketHandler implements WebSocketHandler {
                             () -> new UserNotFoundException(String.format(USER_NOT_FOUND,receiverUsername))
                     );
 
-            if(receiver.isReceiveMessagesFriendOnly()&&!userRepository.areFriends(senderUsername,receiverUsername))
+            if(receiver.isReceiveMessagesFriendOnly()&&!friendRepository.existsByUser1AndUser2(sender,receiver))
                 throw new MessageFriendOnlyException("Пользователь ограничил получение сообщений своим кругом друзей");
 
             if (!userSessions.containsKey(senderUsername))
@@ -90,19 +92,11 @@ public class MessageWebSocketHandler implements WebSocketHandler {
 
             String senderUsername = session.getPrincipal().getName();
             String receiverUsername = getUsernameFromPath(session.getUri().getPath());
-            var sender = userRepository.findByUsernameAndActive(senderUsername,true)
-                    .orElseThrow(
-                            () -> new UserNotFoundException(
-                                    String.format(USER_NOT_FOUND,senderUsername)
-                            )
-                    );
+            var sender = userRepository.findByUsername(senderUsername)
+                    .orElseThrow(() -> new UserNotFoundException(String.format(USER_NOT_FOUND,senderUsername)));
 
             var receiver = userRepository.findByUsernameAndActive(receiverUsername,true)
-                    .orElseThrow(
-                            () -> new UserNotFoundException(
-                                    String.format(USER_NOT_FOUND,receiverUsername)
-                            )
-                    );
+                    .orElseThrow(() -> new UserNotFoundException(String.format(USER_NOT_FOUND,receiverUsername)));
 
             MessageDto sendingMessage = createMessageDto(
                     messageRepository.saveAndFlush(

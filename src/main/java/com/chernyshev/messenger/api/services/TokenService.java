@@ -1,5 +1,6 @@
 package com.chernyshev.messenger.api.services;
 
+import com.chernyshev.messenger.api.dtos.RecoverTokenDto;
 import com.chernyshev.messenger.api.dtos.TokenDto;
 import com.chernyshev.messenger.store.models.TokenEntity;
 import com.chernyshev.messenger.store.models.UserEntity;
@@ -44,5 +45,10 @@ public class TokenService {
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
                 .build();
+    }
+    public RecoverTokenDto getRecoverTokenDto(UserEntity user){
+        String recoverToken = jwtService.generateRecoverToken(user);
+        revokeAllUserToken(user);
+        return RecoverTokenDto.builder().recoverToken(recoverToken).build();
     }
 }
