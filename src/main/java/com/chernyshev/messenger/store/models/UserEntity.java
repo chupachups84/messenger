@@ -16,7 +16,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "users")
+@Table(name = "users",indexes = {
+        @Index(columnList = "username"),
+        @Index(columnList = "email"),
+        @Index(columnList = "emailToken")
+})
+
 public class UserEntity implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,8 +44,11 @@ public class UserEntity implements UserDetails {
     @Builder.Default
     private boolean isActive = true;
 
+    @Transient
     @Enumerated(EnumType.STRING)
-    private Role role;
+    @Builder.Default
+    private Role role = Role.USER;
+    @Transient
     @OneToMany(mappedBy = "user")
     private List<TokenEntity> tokens;
 

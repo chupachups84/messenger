@@ -17,7 +17,8 @@ public class TokenEntity {
     private Long id;
     private String token;
     @Enumerated(EnumType.STRING)
-    private TokenType tokenType;
+    @Builder.Default
+    private TokenType tokenType = TokenType.BEARER;
     private boolean expired;
     private boolean revoked;
     @ManyToOne

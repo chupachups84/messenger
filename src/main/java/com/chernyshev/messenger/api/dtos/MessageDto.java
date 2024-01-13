@@ -18,13 +18,4 @@ public class MessageDto {
     private String message;
     @JsonProperty(value = "sent_at")
     private Instant sentAt;
-
-    @Override
-    public String toString() {
-        return "sender:" + sender + ' ' +
-                "receiver:" + receiver + ' ' +
-                "message:" + message + ' ' +
-                "sentAt=" + sentAt +
-                '}';
-    }
 }

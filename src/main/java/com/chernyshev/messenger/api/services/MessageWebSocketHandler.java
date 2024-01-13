@@ -2,24 +2,24 @@ package com.chernyshev.messenger.api.services;
 
 import com.chernyshev.messenger.api.dtos.ErrorDto;
 import com.chernyshev.messenger.api.dtos.MessageDto;
-import com.chernyshev.messenger.api.exceptions.ForbiddenException;
-import com.chernyshev.messenger.api.exceptions.NotFoundException;
+import com.chernyshev.messenger.api.exceptions.InternalServerException;
+import com.chernyshev.messenger.api.exceptions.MessageFriendOnlyException;
+import com.chernyshev.messenger.api.exceptions.UserNotFoundException;
 import com.chernyshev.messenger.store.models.MessageEntity;
-import com.chernyshev.messenger.store.models.UserEntity;
 import com.chernyshev.messenger.store.repositories.MessageRepository;
 import com.chernyshev.messenger.store.repositories.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.socket.*;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 @RequiredArgsConstructor
-public class CustomWebSocketHandler implements WebSocketHandler {
+@Slf4j
+public class MessageWebSocketHandler implements WebSocketHandler {
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
     private final Map<String, Map<String, WebSocketSession>> userSessions = new ConcurrentHashMap<>();
@@ -29,27 +29,23 @@ public class CustomWebSocketHandler implements WebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
 
         try {
-            String senderUsername = session.getPrincipal().getName();
-            String receiverUsername = getUsername(session.getUri().getPath());
-            var sender = userRepository.findByUsername(senderUsername)
-                    .filter(UserEntity::isActive).orElseThrow(
-                            () -> new NotFoundException(
-                                    String.format(USER_NOT_FOUND,senderUsername)
-                            )
+            String senderUsername =session.getPrincipal().getName() ;
+            String receiverUsername = getUsernameFromPath(session.getUri().getPath());
+            var sender = userRepository.findByUsernameAndActive(senderUsername,true)
+                    .orElseThrow(
+                            () -> new UserNotFoundException(String.format(USER_NOT_FOUND,senderUsername))
                     );
-            var receiver = userRepository.findByUsername(receiverUsername)
-                    .filter(UserEntity::isActive).orElseThrow(
-                            () -> new NotFoundException(
-                                    String.format(USER_NOT_FOUND,receiverUsername)
-                            )
+            var receiver = userRepository.findByUsernameAndActive(receiverUsername,true)
+                    .orElseThrow(
+                            () -> new UserNotFoundException(String.format(USER_NOT_FOUND,receiverUsername))
                     );
 
             if(receiver.isReceiveMessagesFriendOnly()&&!userRepository.areFriends(senderUsername,receiverUsername))
-                throw new ForbiddenException("Пользователь ограничил получение сообщений только своим кругом друзей");
+                throw new MessageFriendOnlyException("Пользователь ограничил получение сообщений своим кругом друзей");
 
-            if (!userSessions.containsKey(sender.getUsername()))
-                userSessions.put(sender.getUsername(), new HashMap<>());
-            userSessions.get(sender.getUsername()).put(receiverUsername,session);
+            if (!userSessions.containsKey(senderUsername))
+                userSessions.put(senderUsername, new ConcurrentHashMap<>());
+            userSessions.get(senderUsername).put(receiverUsername,session);
 
             messageRepository.findBySenderAndReceiver(sender, receiver).forEach(
                     message -> {
@@ -60,27 +56,30 @@ public class CustomWebSocketHandler implements WebSocketHandler {
                                     )
                             );
                         } catch (IOException e) {
-                            throw new RuntimeException(e);
+                            throw new InternalServerException("Возникла ошибка в момент отправки сообщения");
                         }
                     }
             );
-        } catch (NotFoundException e){
-            session.sendMessage(new TextMessage(
-                    objectMapper.writeValueAsString(
-                            ErrorDto.builder()
-                                    .error("Not Found")
-                                    .errorDescription(e.getMessage())
-                                    .build())
-            ));
-            session.close();
-        } catch (ForbiddenException e){
-            session.sendMessage(new TextMessage(
-                    objectMapper.writeValueAsString(
-                            ErrorDto.builder()
-                                    .error("Forbidden")
-                                    .errorDescription(e.getMessage())
-                                    .build())
-            ));
+        } catch (UserNotFoundException | MessageFriendOnlyException | InternalServerException e){
+            String errorName;
+            if(e instanceof UserNotFoundException)
+                errorName="Forbidden";
+            else if(e instanceof MessageFriendOnlyException)
+                errorName="Not Found";
+            else
+                errorName = "Internal Server";
+
+
+            session.sendMessage(
+                    new TextMessage(
+                            objectMapper.writeValueAsString(
+                                    ErrorDto.builder()
+                                            .error(errorName)
+                                            .errorDescription(e.getMessage())
+                                            .build()
+                            )
+                    )
+            );
             session.close();
         }
     }
@@ -90,17 +89,17 @@ public class CustomWebSocketHandler implements WebSocketHandler {
         try {
 
             String senderUsername = session.getPrincipal().getName();
-            String receiverUsername = getUsername(session.getUri().getPath());
-            var sender = userRepository.findByUsername(senderUsername)
-                    .filter(UserEntity::isActive).orElseThrow(
-                            () -> new NotFoundException(
+            String receiverUsername = getUsernameFromPath(session.getUri().getPath());
+            var sender = userRepository.findByUsernameAndActive(senderUsername,true)
+                    .orElseThrow(
+                            () -> new UserNotFoundException(
                                     String.format(USER_NOT_FOUND,senderUsername)
                             )
                     );
 
-            var receiver = userRepository.findByUsername(receiverUsername)
-                    .filter(UserEntity::isActive).orElseThrow(
-                            () -> new NotFoundException(
+            var receiver = userRepository.findByUsernameAndActive(receiverUsername,true)
+                    .orElseThrow(
+                            () -> new UserNotFoundException(
                                     String.format(USER_NOT_FOUND,receiverUsername)
                             )
                     );
@@ -117,7 +116,7 @@ public class CustomWebSocketHandler implements WebSocketHandler {
             if(userSessions.containsKey(receiverUsername))
                 userSessions.get(receiverUsername).get(senderUsername)
                         .sendMessage(new TextMessage(objectMapper.writeValueAsString(sendingMessage)));
-        } catch (NotFoundException e){
+        } catch (UserNotFoundException e){
             session.sendMessage(new TextMessage(
                     objectMapper.writeValueAsString(
                             ErrorDto.builder()
@@ -131,7 +130,7 @@ public class CustomWebSocketHandler implements WebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
-        userSessions.remove(userRepository.findByUsername(session.getPrincipal().getName()).orElseThrow().getUsername());
+        userSessions.remove(session.getPrincipal().getName());
     }
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
@@ -141,8 +140,8 @@ public class CustomWebSocketHandler implements WebSocketHandler {
     public boolean supportsPartialMessages() {
         return false;
     }
-    private String getUsername(String uri) {
-        return uri.substring(uri.lastIndexOf("/") + 1);
+    private String getUsernameFromPath(String path) {
+        return path.substring(path.lastIndexOf("/") + 1);
     }
     private MessageDto createMessageDto(MessageEntity message){
         return MessageDto.builder()

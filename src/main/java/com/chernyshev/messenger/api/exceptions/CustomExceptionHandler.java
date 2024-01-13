@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice
-public class GlobalExceptionHandler {
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ErrorDto> handleNotFoundException(NotFoundException ex){
+public class CustomExceptionHandler {
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorDto> handleNotFoundException(UserNotFoundException ex){
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 ErrorDto.builder()
                         .error("Not Found")
@@ -18,8 +18,13 @@ public class GlobalExceptionHandler {
                         .build());
 
     }
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorDto> handleBadRequestException(BadRequestException ex){
+    @ExceptionHandler({
+            EmailAlreadyExistException.class,
+            FriendRequestException.class,
+            PasswordsNotMatchException.class,
+            UsernameAlreadyExistException.class
+    })
+    public ResponseEntity<ErrorDto> handleBadRequestException(Exception ex){
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                 ErrorDto.builder()
                         .error("Bad Request")
@@ -27,8 +32,11 @@ public class GlobalExceptionHandler {
                         .build());
 
     }
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ErrorDto> handleForbiddenException(ForbiddenException ex){
+    @ExceptionHandler({
+            FriendsListHiddenException.class,
+            MessageFriendOnlyException.class
+    })
+    public ResponseEntity<ErrorDto> handleForbiddenException(Exception ex){
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
                 ErrorDto.builder()
                         .error("Forbidden")
@@ -36,8 +44,12 @@ public class GlobalExceptionHandler {
                         .build());
 
     }
-    @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ErrorDto> handleForbiddenException(UnauthorizedException ex){
+    @ExceptionHandler({
+            InvalidEmailTokenException.class,
+            InvalidUsernameOrPasswordException.class,
+            InvalidJwtTokenException.class
+    })
+    public ResponseEntity<ErrorDto> handleUnauthorizedException(Exception ex){
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                 ErrorDto.builder()
                         .error("Unauthorized")
@@ -51,6 +63,14 @@ public class GlobalExceptionHandler {
                 ErrorDto.builder()
                         .error("Unroutable Sender Address")
                         .errorDescription("Почта не существует")
+                        .build());
+    }
+    @ExceptionHandler(InternalServerException.class)
+    public ResponseEntity<ErrorDto> handleInternalServerException(InternalServerException ex){
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ErrorDto.builder()
+                        .error("Internal Server Error")
+                        .errorDescription(ex.getMessage())
                         .build());
     }
 }

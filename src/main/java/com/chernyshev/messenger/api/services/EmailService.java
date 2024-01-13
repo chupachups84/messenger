@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class EmailService {
-    private final JavaMailSender emailSender;
+    private final JavaMailSender mailSender;
     @Value("${spring.mail.username}")
     private String username;
     public void sendEmailConfirmationEmail(String toEmail,String confirmationToken) {
@@ -19,6 +19,6 @@ public class EmailService {
         mailMessage.setSubject("Подтверждение адреса электронной почты");
         mailMessage.setText("Для подтверждения адреса электронной почты, перейдите по следующей ссылке:\n"
                 + "http://localhost:8080/api/v1/auth/email?token=" + confirmationToken);
-        emailSender.send(mailMessage);
+        mailSender.send(mailMessage);
     }
 }
