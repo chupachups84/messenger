@@ -1,7 +1,7 @@
 package com.chernyshev.messenger.api.services;
 
 import com.chernyshev.messenger.api.dtos.*;
-import com.chernyshev.messenger.api.exceptions.*;
+import com.chernyshev.messenger.api.exceptions.custom.*;
 import com.chernyshev.messenger.store.models.FriendEntity;
 import com.chernyshev.messenger.store.models.UserEntity;
 import com.chernyshev.messenger.store.repositories.FriendRepository;
@@ -41,7 +41,7 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final TokenRepository tokenRepository;
     private static final  String NOT_FOUND_MESSAGE ="Пользователь не найден";
-    public ResponseEntity<TokenDto> signUp(RegisterDto request) throws UsernameAlreadyExistException,EmailAlreadyExistException{
+    public ResponseEntity<TokenDto> signUp(RegisterDto request) throws UsernameAlreadyExistException, EmailAlreadyExistException {
         if(repository.existsByUsername(request.getUsername()))
             throw new UsernameAlreadyExistException(
                     String.format("Пользователь %s уже существует",request.getUsername())
@@ -97,7 +97,7 @@ public class UserService {
                 .body("{\"message\":\"Вы успешно вышли из аккаунта\"}");
     }
 
-    public ResponseEntity<String> emailConfirm(String token) throws InvalidEmailTokenException{
+    public ResponseEntity<String> emailConfirm(String token) throws InvalidEmailTokenException {
         var user = repository.findByEmailToken(token)
                 .orElseThrow(()->new InvalidEmailTokenException("Некорректный токен подтверждения"));
         user.setEmailToken(null);
@@ -107,7 +107,7 @@ public class UserService {
     }
 
     public void tokenRefresh(HttpServletRequest request, HttpServletResponse response)
-            throws UserNotFoundException,InternalServerException,InvalidJwtTokenException{
+            throws UserNotFoundException, InternalServerException,InvalidJwtTokenException{
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         String refreshToken;
         String username;
@@ -138,10 +138,10 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public  ResponseEntity<InfoDto> getUserInfo(String username) throws UserNotFoundException{
+    public  ResponseEntity<UserDto> getUserInfo(String username) throws UserNotFoundException{
         var user = repository.findByUsernameAndActive(username,true)
                 .orElseThrow(()->new UserNotFoundException(NOT_FOUND_MESSAGE));
-        return ResponseEntity.ok().body(getInfoDto(user));
+        return ResponseEntity.ok().body(convertToUserDto(user));
     }
 
     public ResponseEntity<String> changeUserInfo(Principal principal, String username, EditDto editDto)
@@ -228,9 +228,9 @@ public class UserService {
         return ResponseEntity.ok().body(tokenService.getTokenDto(user));
     }
     @Transactional(readOnly = true)
-    public ResponseEntity<List<InfoDto>> getFriendList(Principal principal, String username)
-            throws UserNotFoundException,FriendsListHiddenException{
-        final List<InfoDto> infoDtoList = new ArrayList<>();
+    public ResponseEntity<List<UserDto>> getFriendList(Principal principal, String username)
+            throws UserNotFoundException, FriendsListHiddenException {
+        final List<UserDto> userDtoList = new ArrayList<>();
         UserEntity userEntity = repository.findByUsernameAndActive(username,true)
                 .orElseThrow(() -> new UserNotFoundException(NOT_FOUND_MESSAGE));
 
@@ -238,9 +238,9 @@ public class UserService {
             throw new FriendsListHiddenException(String.format("Пользователь %s скрыл список друзей", username));
         }
         friendRepository.findByUser1(userEntity).ifPresent(
-                friendList -> infoDtoList.addAll(friendList.stream().map(this::getInfoDto).toList())
+                friendList -> userDtoList.addAll(friendList.stream().map(this::convertToUserDto).toList())
         );
-        return ResponseEntity.ok().body(infoDtoList);
+        return ResponseEntity.ok().body(userDtoList);
     }
 
     public ResponseEntity<String> addFriend(Principal principal, String username)
@@ -272,8 +272,8 @@ public class UserService {
                 .body(String.format("{\"message\":\"Пользователь %s добавлен в друзья\"}",username));
     }
 
-    public InfoDto getInfoDto(UserEntity user){
-        return InfoDto.builder()
+    public UserDto convertToUserDto(UserEntity user){
+        return UserDto.builder()
                 .firstname(user.getFirstname())
                 .lastname(user.getLastname())
                 .bio(user.getBio())

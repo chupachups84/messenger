@@ -2,9 +2,9 @@ package com.chernyshev.messenger.api.services;
 
 import com.chernyshev.messenger.api.dtos.ErrorDto;
 import com.chernyshev.messenger.api.dtos.MessageDto;
-import com.chernyshev.messenger.api.exceptions.InternalServerException;
-import com.chernyshev.messenger.api.exceptions.MessageFriendOnlyException;
-import com.chernyshev.messenger.api.exceptions.UserNotFoundException;
+import com.chernyshev.messenger.api.exceptions.custom.InternalServerException;
+import com.chernyshev.messenger.api.exceptions.custom.MessageFriendOnlyException;
+import com.chernyshev.messenger.api.exceptions.custom.UserNotFoundException;
 import com.chernyshev.messenger.store.models.MessageEntity;
 import com.chernyshev.messenger.store.repositories.FriendRepository;
 import com.chernyshev.messenger.store.repositories.MessageRepository;

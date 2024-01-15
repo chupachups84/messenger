@@ -1,4 +1,4 @@
-package com.chernyshev.messenger.api.exceptions;
+package com.chernyshev.messenger.api.exceptions.custom;
 
 public class InvalidJwtTokenException extends RuntimeException{
     public InvalidJwtTokenException(String message){

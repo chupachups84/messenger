@@ -22,7 +22,7 @@ public class UserController {
     public static final String ADD_FRIEND ="/api/v1/users/{username}/friends";
 
     @GetMapping(GET_USER_INFO)
-    public ResponseEntity<InfoDto> getUserInfo(@PathVariable String username){
+    public ResponseEntity<UserDto> getUserInfo(@PathVariable String username){
         return userService.getUserInfo(username);
     }
     @PatchMapping(EDIT_USER_INFO)
@@ -47,7 +47,7 @@ public class UserController {
         return userService.recoverUser(token,username);
     }
     @GetMapping(GET_FRIEND_LIST)
-    public ResponseEntity<List<InfoDto>> getFriendList(Principal principal, @PathVariable String username){
+    public ResponseEntity<List<UserDto>> getFriendList(Principal principal, @PathVariable String username){
         return userService.getFriendList(principal,username);
     }
     @PostMapping(ADD_FRIEND)

@@ -1,6 +1,7 @@
 package com.chernyshev.messenger.api.exceptions;
 
 import com.chernyshev.messenger.api.dtos.ErrorDto;
+import com.chernyshev.messenger.api.exceptions.custom.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.MailException;

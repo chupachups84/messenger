@@ -1,6 +1,7 @@
 package com.chernyshev.messenger.api.services;
 
-import com.chernyshev.messenger.api.exceptions.UserNotFoundException;
+import com.chernyshev.messenger.api.exceptions.custom.InvalidUsernameOrPasswordException;
+import com.chernyshev.messenger.api.exceptions.custom.UserNotFoundException;
 import com.chernyshev.messenger.store.models.UserEntity;
 import com.chernyshev.messenger.store.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username){
         var user =userRepository.findByUsername(username).filter(UserEntity::isActive)
-                .orElseThrow(()-> new UserNotFoundException("Пользователь не найден"));
+                .orElseThrow(()-> new InvalidUsernameOrPasswordException("Неверный логин или пароль"));
         return new User(
                 user.getUsername(),
                 user.getPassword(),
