@@ -64,9 +64,9 @@ public class MessageWebSocketHandler implements WebSocketHandler {
             );
         } catch (UserNotFoundException | MessageFriendOnlyException | InternalServerException e){
             String errorName;
-            if(e instanceof UserNotFoundException)
+            if(e instanceof MessageFriendOnlyException)
                 errorName="Forbidden";
-            else if(e instanceof MessageFriendOnlyException)
+            else if(e instanceof UserNotFoundException)
                 errorName="Not Found";
             else
                 errorName = "Internal Server";

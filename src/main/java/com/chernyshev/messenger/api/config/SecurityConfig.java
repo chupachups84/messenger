@@ -25,7 +25,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize->authorize
                         .requestMatchers("/api/v1/auth/logout","/api/v1/auth/refresh-token").authenticated()
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/users/account-recover").permitAll()
+                        .requestMatchers("/api/v1/userss/account-recover").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session->session
