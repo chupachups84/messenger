@@ -5,6 +5,7 @@ import com.chernyshev.messenger.dtos.MessageDto;
 import com.chernyshev.messenger.exceptions.custom.InternalServerException;
 import com.chernyshev.messenger.exceptions.custom.MessageFriendOnlyException;
 import com.chernyshev.messenger.exceptions.custom.UserNotFoundException;
+import com.chernyshev.messenger.models.UserEntity;
 import com.chernyshev.messenger.repositories.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -32,7 +33,7 @@ public class MessageWebSocketHandler implements WebSocketHandler {
             String senderUsername =session.getPrincipal().getName() ;
             String receiverUsername = getUsernameFromPath(session.getUri().getPath());
 
-            var receiver = userRepository.findByUsernameAndActive(receiverUsername,true)
+            var receiver = userRepository.findByUsername(receiverUsername).filter(UserEntity::isEnabled)
                     .orElseThrow(
                             () -> new UserNotFoundException(String.format(USER_NOT_FOUND,receiverUsername))
                     );
@@ -90,7 +91,7 @@ public class MessageWebSocketHandler implements WebSocketHandler {
             var sender = userRepository.findByUsername(senderUsername)
                     .orElseThrow(() -> new UserNotFoundException(String.format(USER_NOT_FOUND,senderUsername)));
 
-            var receiver = userRepository.findByUsernameAndActive(receiverUsername,true)
+            var receiver = userRepository.findByUsername(receiverUsername).filter(UserEntity::isEnabled)
                     .orElseThrow(() -> new UserNotFoundException(String.format(USER_NOT_FOUND,receiverUsername)));
 
             MessageDto sendingMessage=messageService.sendMessage(sender,receiver,message.getPayload().toString());

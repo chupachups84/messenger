@@ -8,6 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,9 +18,9 @@ import java.util.List;
 public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
     @Override
-    public UserDetails loadUserByUsername(String username){
-        var user =userRepository.findByUsername(username).filter(UserEntity::isActive)
-                .orElseThrow(()-> new InvalidUsernameOrPasswordException("Неверный логин или пароль"));
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        var user =userRepository.findByUsername(username).filter(UserEntity::isEnabled)
+                .orElseThrow(()-> new InvalidUsernameOrPasswordException("Пользователь не найден"));
         return new User(
                 user.getUsername(),
                 user.getPassword(),

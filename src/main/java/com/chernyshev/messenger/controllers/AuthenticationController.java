@@ -2,10 +2,10 @@ package com.chernyshev.messenger.controllers;
 
 import com.chernyshev.messenger.dtos.AuthenticationDto;
 import com.chernyshev.messenger.dtos.RegisterDto;
+import com.chernyshev.messenger.dtos.ResponseMessageDto;
 import com.chernyshev.messenger.dtos.TokenDto;
 import com.chernyshev.messenger.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,15 +29,15 @@ public class AuthenticationController {
         return userService.signIn(request);
     }
     @GetMapping(EMAIL_CONFIRMATION)
-    public ResponseEntity<String> confirm(@RequestParam String confirmationToken) {
+    public ResponseEntity<ResponseMessageDto> confirm(@RequestParam String confirmationToken) {
         return userService.emailConfirm(confirmationToken);
     }
     @PutMapping(REFRESH_TOKEN)
-    public void refreshToken(HttpServletRequest request, HttpServletResponse response)  {
-        userService.tokenRefresh(request,response);
+    public ResponseEntity<TokenDto> refreshToken(HttpServletRequest request)  {
+       return userService.tokenRefresh(request);
     }
     @PostMapping(LOGOUT)
-    public ResponseEntity<String> signOut(HttpServletRequest request) {
+    public ResponseEntity<ResponseMessageDto> signOut(HttpServletRequest request) {
        return userService.signOut(request);
     }
 }

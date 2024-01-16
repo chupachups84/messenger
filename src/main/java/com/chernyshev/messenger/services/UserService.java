@@ -8,9 +8,7 @@ import com.chernyshev.messenger.models.enums.StatusType;
 import com.chernyshev.messenger.repositories.FriendRepository;
 import com.chernyshev.messenger.repositories.TokenRepository;
 import com.chernyshev.messenger.repositories.UserRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -22,7 +20,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.security.Principal;
 import java.util.*;
 
@@ -41,6 +38,7 @@ public class UserService {
     private static final  String NOT_FOUND_MESSAGE ="Пользователь не найден";
     private static final  String USER_EXIST ="Пользователь %s уже существует";
     private static final  String EMAIL_EXIST ="Почта %s занята";
+    private static final String INVALID_TOKEN = "Токен невалиден";
     public ResponseEntity<TokenDto> signUp(RegisterDto request) throws UsernameAlreadyExistException, EmailAlreadyExistException {
         repository.findByUsername(request.getUsername()).ifPresent(
                 userEntity->{
@@ -86,7 +84,7 @@ public class UserService {
         return  ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
     }
 
-    public ResponseEntity<String> signOut(HttpServletRequest request){
+    public ResponseEntity<ResponseMessageDto> signOut(HttpServletRequest request){
         String authHeader = request.getHeader("Authorization");
         String jwt=authHeader.substring(7);
         var storedToken=tokenRepository.findByToken(jwt).orElse(null);
@@ -95,25 +93,24 @@ public class UserService {
         storedToken.setRevoked(true);
         tokenRepository.saveAndFlush(storedToken);
         SecurityContextHolder.clearContext();
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
-                .body("{\"message\":\"Вы успешно вышли из аккаунта\"}");
+        return ResponseEntity.ok().body(ResponseMessageDto.builder().message("Вы успешно вышли из аккаунта").build());
     }
 
-    public ResponseEntity<String> emailConfirm(String token) throws InvalidEmailTokenException {
+    public ResponseEntity<ResponseMessageDto> emailConfirm(String token) throws InvalidEmailTokenException {
         var user = repository.findByEmailToken(token)
                 .orElseThrow(()->new InvalidEmailTokenException("Некорректный токен подтверждения"));
         user.setEmailToken(null);
         repository.saveAndFlush(user);
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
-                .body("{\"message\":\"Почта успешно подтверждена\"}");
+        return ResponseEntity.ok().body(ResponseMessageDto.builder().message("Почта успешно подтверждена").build());
     }
 
-    public void tokenRefresh(HttpServletRequest request, HttpServletResponse response)
+    public ResponseEntity<TokenDto> tokenRefresh(HttpServletRequest request)
             throws UserNotFoundException, InternalServerException,InvalidJwtTokenException{
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         String refreshToken;
         String username;
-        if(authHeader==null||!authHeader.startsWith("Bearer ")) return;
+        if(authHeader==null||!authHeader.startsWith("Bearer "))
+            throw  new InvalidJwtTokenException(INVALID_TOKEN);
         refreshToken=authHeader.substring(7);
         username=jwtService.extractUsername(refreshToken);
         if(username!=null){
@@ -123,25 +120,23 @@ public class UserService {
                 var accessToken = jwtService.generateToken(user);
                 tokenService.revokeAllUserToken(user);
                 tokenService.saveUserToken(user,accessToken);
-                var authResponse = TokenDto.builder()
-                        .accessToken(accessToken)
-                        .refreshToken(refreshToken)
-                        .build();
-                ObjectMapper objectMapper = new ObjectMapper();
-                response.setContentType("application/json");
-                try{
-                    objectMapper.writeValue(response.getWriter(), authResponse);
-                }catch (IOException ex){
-                    throw new InternalServerException("IOException");
-                }
+                return ResponseEntity.ok().body(
+                        TokenDto.builder()
+                                .accessToken(accessToken)
+                                .refreshToken(refreshToken)
+                                .build()
+                );
             }
-            else throw new InvalidJwtTokenException("Токен невалиден");
+            else
+                throw new InvalidJwtTokenException(INVALID_TOKEN);
         }
+        else
+            throw new InvalidJwtTokenException(INVALID_TOKEN);
     }
 
     @Transactional(readOnly = true)
     public  ResponseEntity<UserDto> getUserInfo(String username) throws UserNotFoundException{
-        var user = repository.findByUsernameAndActive(username,true)
+        var user = repository.findByUsername(username).filter(UserEntity::isEnabled)
                 .orElseThrow(()->new UserNotFoundException(NOT_FOUND_MESSAGE));
         return ResponseEntity.ok().body(convertToUserDto(user));
     }
@@ -224,10 +219,10 @@ public class UserService {
         String extractedUsername=jwtService.extractUsername(token.getRecoverToken());
         if(!extractedUsername.equals(username))
             throw new NoPermissionException(String.format("Нет прав восстанавливать аккаунт пользователя %s",username));
-        var user = repository.findByUsernameAndActive(extractedUsername,false)
+        var user = repository.findByUsername(extractedUsername).filter(userEntity -> !userEntity.isEnabled())
                 .orElseThrow(()->new UserNotFoundException(NOT_FOUND_MESSAGE));
         if(!jwtService.isTokenValid(token.getRecoverToken(),user))
-            throw new InvalidJwtTokenException("Токен невалиден");
+            throw new InvalidJwtTokenException(INVALID_TOKEN);
         user.setActive(true);
         return ResponseEntity.ok().body(tokenService.getTokenDto(user));
     }
@@ -235,7 +230,7 @@ public class UserService {
     public ResponseEntity<List<UserDto>> getFriendList(Principal principal, String username)
             throws UserNotFoundException, FriendsListHiddenException {
         final List<UserDto> userDtoList = new ArrayList<>();
-        var user = repository.findByUsernameAndActive(username,true)
+        var user = repository.findByUsername(username).filter(UserEntity::isEnabled)
                 .orElseThrow(() -> new UserNotFoundException(NOT_FOUND_MESSAGE));
 
         if (!principal.getName().equals(username) && user.isFriendsListHidden()) {
@@ -275,7 +270,7 @@ public class UserService {
                        },
                        ()->{
                            var user1 = repository.findByUsername(principal.getName()).orElseThrow();
-                           var user2 = repository.findByUsernameAndActive(username,true)
+                           var user2 = repository.findByUsername(username).filter(UserEntity::isEnabled)
                                    .orElseThrow(()->new UserNotFoundException(NOT_FOUND_MESSAGE));
                            friendRepository.saveAndFlush(
                                    FriendEntity.builder()

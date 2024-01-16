@@ -54,6 +54,7 @@ public class UserEntity implements UserDetails {
     private boolean isFriendsListHidden = false;
 
     @Builder.Default
+    @Getter(AccessLevel.NONE)
     private boolean isActive = true;
 
     @Transient
@@ -82,6 +83,6 @@ public class UserEntity implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return isActive;
     }
 }

@@ -5,13 +5,16 @@ import com.chernyshev.messenger.exceptions.custom.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.MailException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice
 public class CustomExceptionHandler {
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorDto> handleNotFoundException(UserNotFoundException ex){
+    @ExceptionHandler({
+            UserNotFoundException.class
+    })
+    public ResponseEntity<ErrorDto> handleNotFoundException(Exception ex){
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 ErrorDto.builder()
                         .error("Not Found")
@@ -49,7 +52,8 @@ public class CustomExceptionHandler {
     @ExceptionHandler({
             InvalidEmailTokenException.class,
             InvalidUsernameOrPasswordException.class,
-            InvalidJwtTokenException.class
+            InvalidJwtTokenException.class,
+            AuthenticationException.class
     })
     public ResponseEntity<ErrorDto> handleUnauthorizedException(Exception ex){
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
