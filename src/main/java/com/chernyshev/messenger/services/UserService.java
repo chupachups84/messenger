@@ -35,10 +35,10 @@ public class UserService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final TokenRepository tokenRepository;
-    private static final  String NOT_FOUND_MESSAGE ="Пользователь не найден";
-    private static final  String USER_EXIST ="Пользователь %s уже существует";
-    private static final  String EMAIL_EXIST ="Почта %s занята";
-    private static final String INVALID_TOKEN = "Токен невалиден";
+    public static final  String NOT_FOUND_MESSAGE ="Пользователь не найден";
+    public static final  String USER_EXIST ="Пользователь %s уже существует";
+    public static final  String EMAIL_EXIST ="Почта %s занята";
+    public static final String INVALID_TOKEN = "Токен невалиден";
     public ResponseEntity<TokenDto> signUp(RegisterDto request) throws UsernameAlreadyExistException, EmailAlreadyExistException {
         repository.findByUsername(request.getUsername()).ifPresent(
                 userEntity->{
@@ -70,7 +70,7 @@ public class UserService {
         );
     }
 
-    public ResponseEntity<TokenDto> signIn(AuthenticationDto request) throws UserNotFoundException{
+    public ResponseEntity<TokenDto> signIn(LoginDto request) throws UserNotFoundException{
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),
@@ -85,8 +85,8 @@ public class UserService {
     }
 
     public ResponseEntity<ResponseMessageDto> signOut(HttpServletRequest request){
-        String authHeader = request.getHeader("Authorization");
-        String jwt=authHeader.substring(7);
+        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        final String jwt=authHeader.replaceAll("^Bearer ","");
         var storedToken=tokenRepository.findByToken(jwt).orElse(null);
         assert storedToken!=null;
         storedToken.setExpired(true);
@@ -106,16 +106,13 @@ public class UserService {
 
     public ResponseEntity<TokenDto> tokenRefresh(HttpServletRequest request)
             throws UserNotFoundException, InternalServerException,InvalidJwtTokenException{
-        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        String refreshToken;
-        String username;
+        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if(authHeader==null||!authHeader.startsWith("Bearer "))
             throw  new InvalidJwtTokenException(INVALID_TOKEN);
-        refreshToken=authHeader.substring(7);
-        username=jwtService.extractUsername(refreshToken);
+        final String refreshToken=authHeader.replaceAll("^Bearer ","");
+        final String username=jwtService.extractUsername(refreshToken);
         if(username!=null){
-            var user = repository.findByUsername(username)
-                    .orElseThrow(()->new UserNotFoundException(String.format("Пользователь %s не найден",username)));
+            var user = repository.findByUsername(username).orElseThrow();
             if(jwtService.isTokenValid(refreshToken,user)){
                 var accessToken = jwtService.generateToken(user);
                 tokenService.revokeAllUserToken(user);

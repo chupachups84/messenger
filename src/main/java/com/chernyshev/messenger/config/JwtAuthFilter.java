@@ -1,13 +1,14 @@
 package com.chernyshev.messenger.config;
 
-import com.chernyshev.messenger.services.JwtService;
 import com.chernyshev.messenger.repositories.TokenRepository;
+import com.chernyshev.messenger.services.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,15 +29,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException, UsernameNotFoundException {
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        String username;
+        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if(authHeader==null||!authHeader.startsWith("Bearer ")){
             filterChain.doFilter(request,response);
             return;
         }
-        jwt=authHeader.substring(7);
-        username=jwtService.extractUsername(jwt);
+        final String jwt=authHeader.replaceAll("^Bearer ","");
+        String username=jwtService.extractUsername(jwt);
         if(username!=null&& SecurityContextHolder.getContext().getAuthentication()==null){
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
             boolean isTokenValid =tokenRepository.findByToken(jwt)

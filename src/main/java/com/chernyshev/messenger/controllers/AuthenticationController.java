@@ -1,6 +1,6 @@
 package com.chernyshev.messenger.controllers;
 
-import com.chernyshev.messenger.dtos.AuthenticationDto;
+import com.chernyshev.messenger.dtos.LoginDto;
 import com.chernyshev.messenger.dtos.RegisterDto;
 import com.chernyshev.messenger.dtos.ResponseMessageDto;
 import com.chernyshev.messenger.dtos.TokenDto;
@@ -25,8 +25,12 @@ public class AuthenticationController {
         return userService.signUp(request);
     }
     @PostMapping(LOGIN)
-    public ResponseEntity<TokenDto> signIn(@RequestBody AuthenticationDto request) {
+    public ResponseEntity<TokenDto> signIn(@RequestBody LoginDto request) {
         return userService.signIn(request);
+    }
+    @PostMapping(LOGOUT)
+    public ResponseEntity<ResponseMessageDto> signOut(HttpServletRequest request) {
+        return userService.signOut(request);
     }
     @GetMapping(EMAIL_CONFIRMATION)
     public ResponseEntity<ResponseMessageDto> confirm(@RequestParam String confirmationToken) {
@@ -35,9 +39,5 @@ public class AuthenticationController {
     @PutMapping(REFRESH_TOKEN)
     public ResponseEntity<TokenDto> refreshToken(HttpServletRequest request)  {
        return userService.tokenRefresh(request);
-    }
-    @PostMapping(LOGOUT)
-    public ResponseEntity<ResponseMessageDto> signOut(HttpServletRequest request) {
-       return userService.signOut(request);
     }
 }
