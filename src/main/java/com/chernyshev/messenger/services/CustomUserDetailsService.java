@@ -20,7 +20,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         var user =userRepository.findByUsername(username).filter(UserEntity::isEnabled)
-                .orElseThrow(()-> new InvalidUsernameOrPasswordException("Пользователь не найден"));
+                .orElseThrow(()-> new InvalidUsernameOrPasswordException(UserService.NOT_FOUND_MESSAGE));
         return new User(
                 user.getUsername(),
                 user.getPassword(),

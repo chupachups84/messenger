@@ -1,8 +1,11 @@
 package com.chernyshev.messenger.config;
 
+import com.chernyshev.messenger.controllers.AuthenticationController;
+import com.chernyshev.messenger.controllers.UserController;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -23,9 +26,9 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize->authorize
-                        .requestMatchers("/api/v1/auth/logout","/api/v1/auth/refresh-token").authenticated()
+                        .requestMatchers(AuthenticationController.LOGOUT).authenticated()
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/users/account-recover").permitAll()
+                        .requestMatchers(HttpMethod.PUT, UserController.USER).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session->session

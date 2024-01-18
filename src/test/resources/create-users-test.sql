@@ -4,7 +4,7 @@ delete from messages;
 delete from users;
 
 insert into users (id,firstname,lastname,email,username,password,is_active
-,is_friends_list_hidden,is_receive_messages_friend_only) values
+,is_friends_list_hidden,is_receipt_messages_friend_only) values
 (1,'test1','test1','test1@gmail.com','test1234',
 '$2a$10$qufoybQp/.bEY9RfGOqi/OV/q/Q3NMhiykD7LKt52eRxQCw/Z7B5q',true,false,false),
 
@@ -15,7 +15,7 @@ insert into users (id,firstname,lastname,email,username,password,is_active
  '$2a$10$OwstiLqgNiU7h.LYPAhu1OqTfMvjXmSGr0UMh.DNsl1e.hiSsKTWG',true,false,false);
 
 update users
-set email_token='some_valid_email_token' where id = 1;
+set email_token='some_valid_email_token' where username = 'test1234';
 
 insert into friends (id,user1_id,user2_id,status_type) values
 (1,1,3,'APPROVED');

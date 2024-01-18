@@ -18,7 +18,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -33,8 +34,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class AuthenticationControllerTest {
     @Autowired
     private MockMvc mockMvc;
-
     private final ObjectMapper objectMapper=new ObjectMapper();
+
     @Test
     public void registerTest() throws Exception{
 
@@ -190,7 +191,7 @@ public class AuthenticationControllerTest {
     }
 
     @Test
-    public void confirmEmailTest() throws Exception{
+    public void confirmEmailTokenTest() throws Exception{
         mockMvc
                 .perform(
                         get(
@@ -200,12 +201,12 @@ public class AuthenticationControllerTest {
                 )
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is(UserService.CONFIRM_SUCCESS)));
+                .andExpect(jsonPath("$.message", is(UserService.EMAIL_CONFIRM_SUCCESS)));
 
     }
 
     @Test
-    public void confirmEmailWithInvalidEmailTokenTest() throws Exception{
+    public void confirmInvalidEmailTokenTest() throws Exception{
         mockMvc
                 .perform(
                         get(
@@ -231,7 +232,10 @@ public class AuthenticationControllerTest {
                                                 .build()
                                 )
                         )
-        ).andReturn();
+                )
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andReturn();
         mockMvc.perform(put(AuthenticationController.REFRESH_TOKEN)
                         .header("Authorization",
                                 "Bearer " + JsonPath
@@ -245,16 +249,17 @@ public class AuthenticationControllerTest {
     }
 
     @Test
-    public void refreshTokenInvalidTokenTest() throws Exception{
+    public void refreshInvalidTokenTest() throws Exception{
         mockMvc.perform(put(AuthenticationController.REFRESH_TOKEN)
                         .header("Authorization",
-                                "Bearer"
-                        )
+                                "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0MTI" +
+                                        "zNCIsImlhdCI6MTcwNTYxNDcyMywiZXhwIjoxNzA1NzAxMTIzfQ." +
+                                        "FjInW_Dpc_WgD6ugf904XWHD9_7RW2G2oQYS1gyMHXQ")
                 )
                 .andDo(print())
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error", is("Unauthorized")))
-                .andExpect(jsonPath("$.error_description", is(UserService.INVALID_TOKEN)));
+                .andExpect(jsonPath("$.error_description", is(UserService.INVALID_JWT_TOKEN)));
     }
 
 

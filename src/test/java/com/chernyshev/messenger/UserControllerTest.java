@@ -44,7 +44,7 @@ public class UserControllerTest {
 
     @Test
     @WithUserDetails("test1234")
-    public void userSelfInfoTest() throws Exception{
+    public void getInfoTest() throws Exception{
         mockMvc.perform(get(UserController.USER.replaceAll("\\{username\\}","test1234")))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -62,7 +62,7 @@ public class UserControllerTest {
 
     @Test
     @WithUserDetails("test1234")
-    public void userInfoTest() throws Exception{
+    public void getUserInfoTest() throws Exception{
         mockMvc.perform(get(UserController.USER.replaceAll("\\{username\\}","test2345")))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -78,7 +78,7 @@ public class UserControllerTest {
     }
     @Test
     @WithUserDetails("test1234")
-    public void userInfoUserNotFoundTest() throws Exception{
+    public void getNonExistUserInfoTest() throws Exception{
         mockMvc.perform(get(UserController.USER.replaceAll("\\{username\\}","test4567")))
                 .andDo(print())
                 .andExpect(status().isNotFound())
@@ -88,7 +88,7 @@ public class UserControllerTest {
 
     @Test
     @WithUserDetails("test1234")
-    public void updateUserInfoTest() throws Exception{
+    public void updateInfoTest() throws Exception{
         mockMvc.perform(
                 patch(UserController.USER.replaceAll("\\{username\\}","test1234"))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -126,7 +126,7 @@ public class UserControllerTest {
 
     @Test
     @WithUserDetails("test1234")
-    public void updateUserInfoWithNoPermissionTest() throws Exception{
+    public void updateUserInfoTest() throws Exception{
         mockMvc.perform(
                 patch(UserController.USER.replaceAll("\\{username\\}","test2345"))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -149,14 +149,14 @@ public class UserControllerTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error", is(CustomExceptionHandler.FORBIDDEN_ERROR)))
                 .andExpect(jsonPath(
-                        "$.error_description",is(String.format(UserService.NO_PERMISSION_MESSAGE,"test2345"))
+                        "$.error_description",is(UserService.NO_PERMISSION_MESSAGE)
                         )
                 );
     }
 
     @Test
     @WithUserDetails("test1234")
-    public void updateUserInfoUsernameAlreadyExistTest() throws Exception{
+    public void updateInfoUsernameAlreadyExistTest() throws Exception{
         mockMvc.perform(
                         patch(UserController.USER.replaceAll("\\{username\\}","test1234"))
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -176,7 +176,7 @@ public class UserControllerTest {
 
     @Test
     @WithUserDetails("test1234")
-    public void updateUserInfoEmailAlreadyExistTest() throws Exception{
+    public void updateInfoEmailAlreadyExistTest() throws Exception{
         mockMvc.perform(
                         patch(UserController.USER.replaceAll("\\{username\\}","test1234"))
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -196,7 +196,7 @@ public class UserControllerTest {
 
     @Test
     @WithUserDetails("test1234")
-    public void changeUserPasswordTest() throws Exception{
+    public void changePasswordTest() throws Exception{
         mockMvc.perform(
                 patch(UserController.USER_CHANGE_PASSWORD.replaceAll("\\{username\\}","test1234"))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -230,7 +230,7 @@ public class UserControllerTest {
 
     @Test
     @WithUserDetails("test1234")
-    public void changeUserPasswordWithNoPermissionTest() throws Exception{
+    public void changeUserPasswordTest() throws Exception{
         mockMvc.perform(
                         patch(UserController.USER_CHANGE_PASSWORD.replaceAll("\\{username\\}","test2345"))
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -247,14 +247,14 @@ public class UserControllerTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error", is(CustomExceptionHandler.FORBIDDEN_ERROR)))
                 .andExpect(jsonPath(
-                                "$.error_description",is(String.format(UserService.NO_PERMISSION_MESSAGE,"test2345"))
+                                "$.error_description",is(UserService.NO_PERMISSION_MESSAGE)
                         )
                 );
     }
 
     @Test
     @WithUserDetails("test1234")
-    public void changeUserPasswordWithInvalidPasswordTest() throws Exception{
+    public void changeInvalidPasswordTest() throws Exception{
         mockMvc.perform(
                         patch(UserController.USER_CHANGE_PASSWORD.replaceAll("\\{username\\}","test1234"))
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -278,7 +278,7 @@ public class UserControllerTest {
 
     @Test
     @WithUserDetails("test1234")
-    public void changeUserPasswordWithUnmatchedPasswordsTest() throws Exception{
+    public void changeUnmatchedPasswordsTest() throws Exception{
         mockMvc.perform(
                         patch(UserController.USER_CHANGE_PASSWORD.replaceAll("\\{username\\}","test1234"))
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -328,20 +328,12 @@ public class UserControllerTest {
 
     @Test
     @WithUserDetails("test1234")
-    public void deleteUserWithNoPermissionTest() throws Exception{
+    public void deleteUserNoPermissionTest() throws Exception{
         mockMvc.perform(delete(UserController.USER.replaceAll("\\{username\\}","test2345")))
                 .andDo(print())
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error", is(CustomExceptionHandler.FORBIDDEN_ERROR)))
-                .andExpect(
-                        jsonPath(
-                                "$.error_description",is(
-                                        String.format(
-                                                UserService.NO_PERMISSION_MESSAGE,"test2345"
-                                        )
-                                )
-                        )
-                );
+                .andExpect(jsonPath("$.error_description",is(UserService.NO_PERMISSION_MESSAGE)));
 
     }
 
@@ -378,7 +370,7 @@ public class UserControllerTest {
 
     @Test
     @WithUserDetails("test2345")
-    public void recoverUserWithNoPermissionTest() throws Exception{
+    public void recoverUserNoPermissionTest() throws Exception{
         MvcResult mvcResult=
                 mockMvc.perform(delete(UserController.USER.replaceAll("\\{username\\}","test2345")))
                         .andDo(print())
@@ -402,21 +394,12 @@ public class UserControllerTest {
                 )
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error", is(CustomExceptionHandler.FORBIDDEN_ERROR)))
-                .andExpect(
-                        jsonPath(
-                                "$.error_description",is(
-                                        String.format(
-                                                UserService.NO_PERMISSION_MESSAGE,"test1234"
-                                        )
-                                )
-                        )
-                );
-
+                .andExpect(jsonPath("$.error_description",is(UserService.NO_PERMISSION_MESSAGE)));
     }
 
     @Test
     @WithUserDetails("test1234")
-    public void recoverUserWithActiveUserTest() throws Exception{
+    public void recoverActiveUserTest() throws Exception{
         MvcResult mvcResult=
                 mockMvc.perform(delete(UserController.USER.replaceAll("\\{username\\}","test1234")))
                         .andDo(print())
@@ -471,16 +454,16 @@ public class UserControllerTest {
         mockMvc.perform(post(UserController.USER_FRIENDS.replaceAll("\\{username\\}","test2345")))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message",is(UserService.FRIEND_REQUEST_HAS_SEND)));
+                .andExpect(jsonPath("$.message",is(UserService.FRIEND_REQUEST_SUCCESS_SEND)));
     }
 
     @Test
     @WithUserDetails("test1234")
-    public void sendFriendRequestWhenAlreadyRequestTest() throws Exception{
+    public void sendExistFriendRequestTest() throws Exception{
         mockMvc.perform(post(UserController.USER_FRIENDS.replaceAll("\\{username\\}","test2345")))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message",is(UserService.FRIEND_REQUEST_HAS_SEND)));
+                .andExpect(jsonPath("$.message",is(UserService.FRIEND_REQUEST_SUCCESS_SEND)));
         mockMvc.perform(post(UserController.USER_FRIENDS.replaceAll("\\{username\\}","test2345")))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
@@ -490,7 +473,7 @@ public class UserControllerTest {
 
     @Test
     @WithUserDetails("test1234")
-    public void sendFriendRequestSelfRequestTest() throws Exception{
+    public void sendSelfFriendRequestTest() throws Exception{
         mockMvc.perform(post(UserController.USER_FRIENDS.replaceAll("\\{username\\}","test1234")))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
@@ -510,7 +493,7 @@ public class UserControllerTest {
 
     @Test
     @WithUserDetails("test1234")
-    public void receiveFriendListTest() throws Exception{
+    public void getFriendListTest() throws Exception{
         List<UserDto> friends = new ArrayList<>();
         friends.add(
                 UserDto.builder()
@@ -531,7 +514,7 @@ public class UserControllerTest {
 
     @Test
     @WithUserDetails("test1234")
-    public void receiveUserFriendListTest() throws Exception{
+    public void getUserFriendListTest() throws Exception{
         List<UserDto> friends = new ArrayList<>();
         friends.add(
                 UserDto.builder()
@@ -552,7 +535,7 @@ public class UserControllerTest {
 
     @Test
     @WithUserDetails("test1234")
-    public void receiveUserFriendListWhenFriendListHiddenTest() throws Exception{
+    public void getUserHiddenFriendListTest() throws Exception{
         mockMvc.perform(get(UserController.USER_FRIENDS.replaceAll("\\{username\\}","test2345")))
                 .andDo(print())
                 .andExpect(status().isForbidden())
@@ -565,7 +548,7 @@ public class UserControllerTest {
 
     @Test
     @WithUserDetails("test1234")
-    public void receiveUserFriendListNonExistUserTest() throws Exception{
+    public void getNonExistUserFriendListTest() throws Exception{
         mockMvc.perform(get(UserController.USER_FRIENDS.replaceAll("\\{username\\}","test4567")))
                 .andDo(print())
                 .andExpect(status().isNotFound())

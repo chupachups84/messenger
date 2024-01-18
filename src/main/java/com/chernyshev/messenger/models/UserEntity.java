@@ -48,7 +48,7 @@ public class UserEntity implements UserDetails {
     private String avatarUrl;
 
     @Builder.Default
-    private boolean isReceiveMessagesFriendOnly = false;
+    private boolean isReceiptMessagesFriendOnly = false;
 
     @Builder.Default
     private boolean isFriendsListHidden = false;

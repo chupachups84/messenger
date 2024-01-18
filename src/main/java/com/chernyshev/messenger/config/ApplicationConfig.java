@@ -58,7 +58,6 @@ public class ApplicationConfig {
         return new BCryptPasswordEncoder();
     }
 
-
     @Bean
     public JavaMailSender mailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();

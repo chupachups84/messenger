@@ -24,7 +24,11 @@ public class MessageWebSocketHandler implements WebSocketHandler {
 
     private final Map<String, Map<String, WebSocketSession>> userSessions = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-    private static final String USER_NOT_FOUND ="Пользователь %s не найден";
+    private static final String USER_NOT_FOUND ="User %s not found";
+    private static final String INTERNAL_SERVER="Internal server error during message transmission";
+
+    private static final String RECEIPT_MESSAGES_FRIENDS_ONLY =
+            "The user has limited the receipt of messages to his circle of friends";
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
 
@@ -38,8 +42,8 @@ public class MessageWebSocketHandler implements WebSocketHandler {
                             () -> new UserNotFoundException(String.format(USER_NOT_FOUND,receiverUsername))
                     );
 
-            if(receiver.isReceiveMessagesFriendOnly()&&!messageService.areFriends(senderUsername,receiverUsername))
-                throw new MessageFriendOnlyException("Пользователь ограничил получение сообщений своим кругом друзей");
+            if(receiver.isReceiptMessagesFriendOnly()&&!messageService.areFriends(senderUsername,receiverUsername))
+                throw new MessageFriendOnlyException(RECEIPT_MESSAGES_FRIENDS_ONLY);
 
             if (!userSessions.containsKey(senderUsername))
                 userSessions.put(senderUsername, new ConcurrentHashMap<>());
@@ -54,7 +58,7 @@ public class MessageWebSocketHandler implements WebSocketHandler {
                                     )
                             );
                         } catch (IOException e) {
-                            throw new InternalServerException("Возникла ошибка в момент отправки сообщения");
+                            throw new InternalServerException(INTERNAL_SERVER);
                         }
                     }
             );
@@ -85,7 +89,6 @@ public class MessageWebSocketHandler implements WebSocketHandler {
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
         try {
-
             String senderUsername = session.getPrincipal().getName();
             String receiverUsername = getUsernameFromPath(session.getUri().getPath());
             var sender = userRepository.findByUsername(senderUsername)

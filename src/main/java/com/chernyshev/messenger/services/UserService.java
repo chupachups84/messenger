@@ -11,7 +11,6 @@ import com.chernyshev.messenger.repositories.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -35,10 +34,23 @@ public class UserService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final TokenRepository tokenRepository;
-    public static final  String NOT_FOUND_MESSAGE ="Пользователь не найден";
-    public static final  String USER_EXIST ="Пользователь %s уже существует";
-    public static final  String EMAIL_EXIST ="Почта %s занята";
-    public static final String INVALID_TOKEN = "Токен невалиден";
+
+    public static final  String NOT_FOUND_MESSAGE ="User not found";
+    public static final  String USER_EXIST ="Username %s already exist";
+    public static final  String EMAIL_EXIST ="Email %s already exist";
+    public static final String INVALID_JWT_TOKEN = "Invalid Jwt token";
+    public static final String INVALID_CONFIRM_TOKEN = "Invalid confirmation token";
+    public static final String EMAIL_CONFIRM_SUCCESS ="Email successfully confirmed";
+    public static final String NO_PERMISSION_MESSAGE ="No permission";
+    public static final String PASSWORD_HAS_CHANGED="Password successfully changed";
+    public static final String INVALID_PASSWORD = "Invalid password";
+    public static final String PASSWORDS_NOT_MATCH = "Passwords don't match";
+    public static final String SELF_FRIEND_REQUEST = "Can't add yourself as a friend";
+    public static final String FRIEND_REQUEST_EXIST = "Request has already sent";
+    public static final String FRIEND_REQUEST_SUCCESS_SEND = "The request has been sent successfully";
+    public static final String FRIEND_LIST_HIDDEN = "User %s has hidden the friends list";
+    public static final String LOGOUT_SUCCESS="Logout successfully";
+
     public ResponseEntity<TokenDto> signUp(RegisterDto request) throws UsernameAlreadyExistException, EmailAlreadyExistException {
         repository.findByUsername(request.getUsername()).ifPresent(
                 userEntity->{
@@ -93,22 +105,22 @@ public class UserService {
         storedToken.setRevoked(true);
         tokenRepository.saveAndFlush(storedToken);
         SecurityContextHolder.clearContext();
-        return ResponseEntity.ok().body(ResponseMessageDto.builder().message("Вы успешно вышли из аккаунта").build());
+        return ResponseEntity.ok().body(ResponseMessageDto.builder().message(LOGOUT_SUCCESS).build());
     }
 
     public ResponseEntity<ResponseMessageDto> emailConfirm(String token) throws InvalidEmailTokenException {
         var user = repository.findByEmailToken(token)
-                .orElseThrow(()->new InvalidEmailTokenException("Некорректный токен подтверждения"));
+                .orElseThrow(()->new InvalidEmailTokenException(INVALID_CONFIRM_TOKEN));
         user.setEmailToken(null);
         repository.saveAndFlush(user);
-        return ResponseEntity.ok().body(ResponseMessageDto.builder().message("Почта успешно подтверждена").build());
+        return ResponseEntity.ok().body(ResponseMessageDto.builder().message(EMAIL_CONFIRM_SUCCESS).build());
     }
 
     public ResponseEntity<TokenDto> tokenRefresh(HttpServletRequest request)
             throws UserNotFoundException, InternalServerException,InvalidJwtTokenException{
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if(authHeader==null||!authHeader.startsWith("Bearer "))
-            throw  new InvalidJwtTokenException(INVALID_TOKEN);
+            throw  new InvalidJwtTokenException(INVALID_JWT_TOKEN);
         final String refreshToken=authHeader.replaceAll("^Bearer ","");
         final String username=jwtService.extractUsername(refreshToken);
         if(username!=null){
@@ -125,10 +137,10 @@ public class UserService {
                 );
             }
             else
-                throw new InvalidJwtTokenException(INVALID_TOKEN);
+                throw new InvalidJwtTokenException(INVALID_JWT_TOKEN);
         }
         else
-            throw new InvalidJwtTokenException(INVALID_TOKEN);
+            throw new InvalidJwtTokenException(INVALID_JWT_TOKEN);
     }
 
     @Transactional(readOnly = true)
@@ -141,15 +153,29 @@ public class UserService {
     public ResponseEntity<TokenDto> changeUserInfo(Principal principal, String username, UserDto userDto)
             throws NoPermissionException ,UsernameAlreadyExistException,EmailAlreadyExistException{
         if(!username.equals(principal.getName()))
-            throw new NoPermissionException(String.format("Нет прав менять информацию о пользователе %s",username));
-        var user = repository.findByUsername(username)
-                .orElseThrow(()->new UserNotFoundException(NOT_FOUND_MESSAGE));
-        Optional.ofNullable(userDto.getFirstname()).filter(s -> !s.trim().isEmpty()).ifPresent(s -> user.setFirstname(s.trim()));
-        Optional.ofNullable(userDto.getLastname()).filter(s -> !s.trim().isEmpty()).ifPresent(s->user.setLastname(s.trim()));
-        Optional.ofNullable(userDto.getBio()).filter(s -> !s.trim().isEmpty()).ifPresent(s->user.setBio(s.trim()));
-        Optional.ofNullable(userDto.getStatus()).filter(s -> !s.trim().isEmpty()).ifPresent(s->user.setStatus(s.trim()));
-        Optional.ofNullable(userDto.getIsFriendsListHidden()).ifPresent(user::setFriendsListHidden);
-        Optional.ofNullable(userDto.getIsReceiveMessagesFriendOnly()).ifPresent(user::setReceiveMessagesFriendOnly);
+            throw new NoPermissionException(NO_PERMISSION_MESSAGE);
+        var user = repository.findByUsername(username).orElseThrow();
+        Optional.ofNullable(
+                userDto.getFirstname()).filter(s -> !s.trim().isEmpty()).ifPresent(s -> user.setFirstname(s.trim())
+        );
+        Optional.ofNullable(
+                userDto.getLastname()).filter(s -> !s.trim().isEmpty()).ifPresent(s->user.setLastname(s.trim())
+        );
+        Optional.ofNullable(
+                userDto.getAvatarUrl()).filter(s -> !s.trim().isEmpty()).ifPresent(s->user.setAvatarUrl(s.trim())
+        );
+        Optional.ofNullable(
+                userDto.getBio()).filter(s -> !s.trim().isEmpty()).ifPresent(s->user.setBio(s.trim())
+        );
+        Optional.ofNullable(
+                userDto.getStatus()).filter(s -> !s.trim().isEmpty()).ifPresent(s->user.setStatus(s.trim())
+        );
+        Optional.ofNullable(
+                userDto.getIsFriendsListHidden()).ifPresent(user::setFriendsListHidden
+        );
+        Optional.ofNullable(
+                userDto.getIsReceiveMessagesFriendOnly()).ifPresent(user::setReceiptMessagesFriendOnly
+        );
 
         Optional.ofNullable(userDto.getEmail()).filter(s->!s.trim().isEmpty())
                 .ifPresent(
@@ -186,28 +212,32 @@ public class UserService {
 
     }
 
-    public ResponseEntity<String> changeUserPassword(Principal principal, String username, PasswordDto request)
+    public ResponseEntity<ResponseMessageDto> changeUserPassword(Principal principal, String username, PasswordDto request)
             throws NoPermissionException, PasswordsNotMatchException{
         if(!username.equals(principal.getName()))
-            throw new NoPermissionException(String.format("Нет прав менять пароль пользователя %s",username));
+            throw new NoPermissionException(NO_PERMISSION_MESSAGE);
+
         var user = repository.findByUsername(principal.getName())
                 .orElseThrow(()->new UserNotFoundException(NOT_FOUND_MESSAGE));
+
         if(!passwordEncoder.matches(request.getOldPassword(),user.getPassword()))
-            throw new PasswordsNotMatchException("Неправильный пароль");
+            throw new PasswordsNotMatchException(INVALID_PASSWORD);
+
         if(!request.getNewPassword().equals(request.getConfirmPassword()))
-            throw new PasswordsNotMatchException("Пароли не совпадают");
+            throw new PasswordsNotMatchException(PASSWORDS_NOT_MATCH);
+
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         repository.saveAndFlush(user);
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body("{\"message\":\"Пароль изменен\"}");
+        return ResponseEntity.ok().body(ResponseMessageDto.builder().message(PASSWORD_HAS_CHANGED).build());
     }
 
     public ResponseEntity<RecoverTokenDto> deleteUser(Principal principal,String username)
             throws NoPermissionException,UserNotFoundException{
         if(!username.equals(principal.getName()))
-            throw new NoPermissionException(String.format("Нет прав удалять аккаунт пользователя %s",username));
-        var user = repository.findByUsername(principal.getName())
-                .orElseThrow(()->new UserNotFoundException(NOT_FOUND_MESSAGE));
+            throw new NoPermissionException(NO_PERMISSION_MESSAGE);
+        var user = repository.findByUsername(principal.getName()).orElseThrow();
         user.setActive(false);
+        SecurityContextHolder.clearContext();
         return ResponseEntity.ok(tokenService.getRecoverTokenDto(repository.saveAndFlush(user)));
     }
 
@@ -215,14 +245,15 @@ public class UserService {
             throws NoPermissionException,UserNotFoundException{
         String extractedUsername=jwtService.extractUsername(token.getRecoverToken());
         if(!extractedUsername.equals(username))
-            throw new NoPermissionException(String.format("Нет прав восстанавливать аккаунт пользователя %s",username));
+            throw new NoPermissionException(NO_PERMISSION_MESSAGE);
         var user = repository.findByUsername(extractedUsername).filter(userEntity -> !userEntity.isEnabled())
                 .orElseThrow(()->new UserNotFoundException(NOT_FOUND_MESSAGE));
         if(!jwtService.isTokenValid(token.getRecoverToken(),user))
-            throw new InvalidJwtTokenException(INVALID_TOKEN);
+            throw new InvalidJwtTokenException(INVALID_JWT_TOKEN);
         user.setActive(true);
         return ResponseEntity.ok().body(tokenService.getTokenDto(user));
     }
+
     @Transactional(readOnly = true)
     public ResponseEntity<List<UserDto>> getFriendList(Principal principal, String username)
             throws UserNotFoundException, FriendsListHiddenException {
@@ -231,7 +262,7 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException(NOT_FOUND_MESSAGE));
 
         if (!principal.getName().equals(username) && user.isFriendsListHidden()) {
-            throw new FriendsListHiddenException(String.format("Пользователь %s скрыл список друзей", username));
+            throw new FriendsListHiddenException(String.format(FRIEND_LIST_HIDDEN, username));
         }
         friendRepository.findAllByUsername(username).ifPresent(
                 friendList -> userDtoList.addAll(
@@ -248,17 +279,17 @@ public class UserService {
         return ResponseEntity.ok().body(userDtoList);
     }
 
-    public ResponseEntity<String> addFriend(Principal principal, String username)
+    public ResponseEntity<ResponseMessageDto> addFriend(Principal principal, String username)
             throws FriendRequestException,UserNotFoundException{
         if(principal.getName().equals(username))
-            throw new FriendRequestException("Нельзя добавить себя в друзья");
+            throw new FriendRequestException(SELF_FRIEND_REQUEST);
 
         friendRepository.findByUsername1AndUsername2(principal.getName(),username)
                 .ifPresentOrElse(
                        friend -> {
                            if(friend.getUser1().getUsername().equals(principal.getName())
                                    &&friend.getUser2().getUsername().equals(username)) {
-                               throw new FriendRequestException("Заявка уже отправлена");
+                               throw new FriendRequestException(FRIEND_REQUEST_EXIST);
                            }
                            else{
                                friend.setStatusType(StatusType.APPROVED);
@@ -278,12 +309,8 @@ public class UserService {
                            );
                        }
                 );
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
-                .body("{\"message\":\"Запрос отправлен\"}");
+        return ResponseEntity.ok().body(ResponseMessageDto.builder().message(FRIEND_REQUEST_SUCCESS_SEND).build());
     }
-
-
-
 
     public UserDto convertToUserDto(UserEntity user){
         return UserDto.builder()
@@ -295,7 +322,7 @@ public class UserService {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .isFriendsListHidden(user.isFriendsListHidden())
-                .isReceiveMessagesFriendOnly(user.isReceiveMessagesFriendOnly())
+                .isReceiveMessagesFriendOnly(user.isReceiptMessagesFriendOnly())
                 .build();
     }
 }

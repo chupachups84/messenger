@@ -29,7 +29,7 @@ public class UserController {
     }
 
     @PatchMapping(USER_CHANGE_PASSWORD)
-    public ResponseEntity<String> changePassword(
+    public ResponseEntity<ResponseMessageDto> changePassword(
             Principal principal,@PathVariable String username,@RequestBody PasswordDto request
     ) {
         return userService.changeUserPassword(principal,username,request);
@@ -47,7 +47,7 @@ public class UserController {
         return userService.getFriendList(principal,username);
     }
     @PostMapping(USER_FRIENDS)
-    public ResponseEntity<String> addToFriends(Principal principal, @PathVariable String username){
+    public ResponseEntity<ResponseMessageDto> addToFriends(Principal principal, @PathVariable String username){
         return userService.addFriend(principal,username);
     }
 
