@@ -15,6 +15,7 @@ import org.springframework.web.socket.*;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 @Slf4j
@@ -34,8 +35,8 @@ public class MessageWebSocketHandler implements WebSocketHandler {
 
         try {
 
-            String senderUsername =session.getPrincipal().getName() ;
-            String receiverUsername = getUsernameFromPath(session.getUri().getPath());
+            String senderUsername = Objects.requireNonNull(session.getPrincipal()).getName() ;
+            String receiverUsername = getUsernameFromPath(Objects.requireNonNull(session.getUri()).getPath());
 
             var receiver = userRepository.findByUsername(receiverUsername).filter(UserEntity::isEnabled)
                     .orElseThrow(
@@ -89,8 +90,8 @@ public class MessageWebSocketHandler implements WebSocketHandler {
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
         try {
-            String senderUsername = session.getPrincipal().getName();
-            String receiverUsername = getUsernameFromPath(session.getUri().getPath());
+            String senderUsername = Objects.requireNonNull(session.getPrincipal()).getName();
+            String receiverUsername = getUsernameFromPath(Objects.requireNonNull(session.getUri()).getPath());
             var sender = userRepository.findByUsername(senderUsername)
                     .orElseThrow(() -> new UserNotFoundException(String.format(USER_NOT_FOUND,senderUsername)));
 
@@ -115,7 +116,7 @@ public class MessageWebSocketHandler implements WebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) {
-        userSessions.remove(session.getPrincipal().getName());
+        userSessions.remove(Objects.requireNonNull(session.getPrincipal()).getName());
     }
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
