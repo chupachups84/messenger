@@ -31,6 +31,7 @@ public class CustomExceptionHandler {
     }
 
     @ExceptionHandler({
+            InvalidEmailTokenException.class,
             EmailAlreadyExistException.class,
             FriendRequestException.class,
             PasswordsNotMatchException.class,
@@ -60,7 +61,6 @@ public class CustomExceptionHandler {
     }
 
     @ExceptionHandler({
-            InvalidEmailTokenException.class,
             InvalidUsernameOrPasswordException.class,
             InvalidJwtTokenException.class,
             AuthenticationException.class
