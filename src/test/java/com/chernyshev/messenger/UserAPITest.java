@@ -37,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource("/application-test.yml")
 @Sql(value = {"/create-users-test.sql"},executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/clear.sql"},executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-public class UserControllerTest {
+public class UserAPITest {
     @Autowired
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper=new ObjectMapper();

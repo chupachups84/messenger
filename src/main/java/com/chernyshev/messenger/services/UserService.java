@@ -38,7 +38,7 @@ public class UserService {
     public static final  String NOT_FOUND_MESSAGE ="User not found";
     public static final  String USER_EXIST ="Username %s already exist";
     public static final  String EMAIL_EXIST ="Email %s already exist";
-    public static final String INVALID_JWT_TOKEN = "Invalid Jwt token";
+    public static final String INVALID_JWT = "Invalid Jwt";
     public static final String INVALID_CONFIRM_TOKEN = "Invalid confirmation token";
     public static final String EMAIL_CONFIRM_SUCCESS ="Email successfully confirmed";
     public static final String NO_PERMISSION_MESSAGE ="No permission";
@@ -117,14 +117,16 @@ public class UserService {
     }
 
     public ResponseEntity<TokenDto> tokenRefresh(HttpServletRequest request)
-            throws UserNotFoundException, InternalServerException,InvalidJwtTokenException{
+            throws UserNotFoundException,InvalidJwtTokenException{
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if(authHeader==null||!authHeader.startsWith("Bearer "))
-            throw  new InvalidJwtTokenException(INVALID_JWT_TOKEN);
+            throw  new InvalidJwtTokenException(INVALID_JWT);
         final String refreshToken=authHeader.replaceAll("^Bearer ","");
         final String username=jwtService.extractUsername(refreshToken);
         if(username!=null){
-            var user = repository.findByUsername(username).orElseThrow();
+            var user = repository.findByUsername(username).orElseThrow(
+                    ()->new UserNotFoundException(NOT_FOUND_MESSAGE)
+            );
             if(jwtService.isTokenValid(refreshToken,user)){
                 var accessToken = jwtService.generateToken(user);
                 tokenService.revokeAllUserToken(user);
@@ -137,10 +139,10 @@ public class UserService {
                 );
             }
             else
-                throw new InvalidJwtTokenException(INVALID_JWT_TOKEN);
+                throw new InvalidJwtTokenException(INVALID_JWT);
         }
         else
-            throw new InvalidJwtTokenException(INVALID_JWT_TOKEN);
+            throw new InvalidJwtTokenException(INVALID_JWT);
     }
 
     @Transactional(readOnly = true)
@@ -249,7 +251,7 @@ public class UserService {
         var user = repository.findByUsername(extractedUsername).filter(userEntity -> !userEntity.isEnabled())
                 .orElseThrow(()->new UserNotFoundException(NOT_FOUND_MESSAGE));
         if(!jwtService.isTokenValid(token.getRecoverToken(),user))
-            throw new InvalidJwtTokenException(INVALID_JWT_TOKEN);
+            throw new InvalidJwtTokenException(INVALID_JWT);
         user.setActive(true);
         return ResponseEntity.ok().body(tokenService.getTokenDto(user));
     }

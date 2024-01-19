@@ -1,7 +1,11 @@
 package com.chernyshev.messenger.config;
 
+import com.chernyshev.messenger.dtos.ErrorDto;
 import com.chernyshev.messenger.repositories.TokenRepository;
 import com.chernyshev.messenger.services.JwtService;
+import com.chernyshev.messenger.services.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,6 +30,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
     private final TokenRepository tokenRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException, UsernameNotFoundException {
@@ -35,19 +40,30 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
         final String jwt=authHeader.replaceAll("^Bearer ","");
-        String username=jwtService.extractUsername(jwt);
-        if(username!=null&& SecurityContextHolder.getContext().getAuthentication()==null){
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-            boolean isTokenValid =tokenRepository.findByToken(jwt)
-                    .map(t->!t.isExpired()&&!t.isRevoked())
-                    .orElse(false);
-            if(jwtService.isTokenValid(jwt,userDetails)&&isTokenValid){
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+        try {
+            String username=jwtService.extractUsername(jwt);
+            if(username!=null&& SecurityContextHolder.getContext().getAuthentication()==null){
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+                boolean isTokenValid =tokenRepository.findByToken(jwt)
+                        .map(t->!t.isExpired()&&!t.isRevoked())
+                        .orElse(false);
+                if(jwtService.isTokenValid(jwt,userDetails)&&isTokenValid){
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
+            filterChain.doFilter(request,response);
+        }catch (JwtException exception){
+            response.sendError(401);
+            response.setContentType("application/json");
+            response.getWriter().write(objectMapper.writeValueAsString(
+                    ErrorDto.builder()
+                            .error("Unauthorized")
+                            .errorDescription(UserService.INVALID_JWT)
+                            .build()
+            ));
         }
-        filterChain.doFilter(request,response);
     }
 }

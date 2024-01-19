@@ -1,10 +1,6 @@
 package com.chernyshev.messenger.services;
 
-import com.chernyshev.messenger.dtos.ErrorDto;
 import com.chernyshev.messenger.dtos.MessageDto;
-import com.chernyshev.messenger.exceptions.custom.InternalServerException;
-import com.chernyshev.messenger.exceptions.custom.MessageFriendOnlyException;
-import com.chernyshev.messenger.exceptions.custom.UserNotFoundException;
 import com.chernyshev.messenger.models.UserEntity;
 import com.chernyshev.messenger.repositories.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,119 +9,91 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.socket.*;
 
-import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+
 @RequiredArgsConstructor
 @Slf4j
 public class MessageWebSocketHandler implements WebSocketHandler {
     private final MessageService messageService;
     private final UserRepository userRepository;
-
     private final Map<String, Map<String, WebSocketSession>> userSessions = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-    private static final String USER_NOT_FOUND ="User %s not found";
-    private static final String INTERNAL_SERVER="Internal server error during message transmission";
+    private static final String USER_NOT_FOUND = "User %s not found";
+    private static final String RECEIPT_MESSAGES_FRIENDS_ONLY
+            = "The user has limited the receipt of messages to his circle of friends";
 
-    private static final String RECEIPT_MESSAGES_FRIENDS_ONLY =
-            "The user has limited the receipt of messages to his circle of friends";
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
 
-        try {
-
-            String senderUsername = Objects.requireNonNull(session.getPrincipal()).getName() ;
-            String receiverUsername = getUsernameFromPath(Objects.requireNonNull(session.getUri()).getPath());
-
-            var receiver = userRepository.findByUsername(receiverUsername).filter(UserEntity::isEnabled)
-                    .orElseThrow(
-                            () -> new UserNotFoundException(String.format(USER_NOT_FOUND,receiverUsername))
-                    );
-
-            if(receiver.isReceiptMessagesFriendOnly()&&!messageService.areFriends(senderUsername,receiverUsername))
-                throw new MessageFriendOnlyException(RECEIPT_MESSAGES_FRIENDS_ONLY);
-
-            if (!userSessions.containsKey(senderUsername))
-                userSessions.put(senderUsername, new ConcurrentHashMap<>());
-            userSessions.get(senderUsername).put(receiverUsername,session);
-
-            messageService.getMessageHistory(senderUsername, receiverUsername).forEach(
-                    message -> {
-                        try {
-                            session.sendMessage(
-                                    new TextMessage(
-                                            objectMapper.writeValueAsString(message)
-                                    )
-                            );
-                        } catch (IOException e) {
-                            throw new InternalServerException(INTERNAL_SERVER);
-                        }
-                    }
-            );
-        } catch (UserNotFoundException | MessageFriendOnlyException | InternalServerException e){
-            String errorName;
-            if(e instanceof MessageFriendOnlyException)
-                errorName="Forbidden";
-            else if(e instanceof UserNotFoundException)
-                errorName="Not Found";
-            else
-                errorName = "Internal Server";
-
-
-            session.sendMessage(
-                    new TextMessage(
-                            objectMapper.writeValueAsString(
-                                    ErrorDto.builder()
-                                            .error(errorName)
-                                            .errorDescription(e.getMessage())
-                                            .build()
-                            )
-                    )
-            );
-            session.close();
+        String senderUsername = Objects.requireNonNull(session.getPrincipal()).getName();
+        String receiverUsername = getUsernameFromPath(Objects.requireNonNull(session.getUri()).getPath());
+        final var receiver
+                = userRepository.findByUsername(receiverUsername).filter(UserEntity::isEnabled).orElse(null);
+        if (receiver == null) {
+            session.close(CloseStatus.POLICY_VIOLATION.withReason(String.format(USER_NOT_FOUND, receiverUsername)));
+            return;
         }
+
+        if (receiver.isReceiptMessagesFriendOnly() && !messageService.areFriends(senderUsername, receiverUsername)) {
+            session.close(CloseStatus.PROTOCOL_ERROR.withReason(RECEIPT_MESSAGES_FRIENDS_ONLY));
+        }
+        userSessions.computeIfAbsent(senderUsername, k -> new ConcurrentHashMap<>()).put(receiverUsername, session);
+        log.info(userSessions.toString());
+
+        List<MessageDto> messages = messageService.getMessageHistory(senderUsername, receiverUsername);
+        for (MessageDto message : messages) {
+            session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
+        }
+
+
     }
 
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
-        try {
-            String senderUsername = Objects.requireNonNull(session.getPrincipal()).getName();
-            String receiverUsername = getUsernameFromPath(Objects.requireNonNull(session.getUri()).getPath());
-            var sender = userRepository.findByUsername(senderUsername)
-                    .orElseThrow(() -> new UserNotFoundException(String.format(USER_NOT_FOUND,senderUsername)));
+        String senderUsername = Objects.requireNonNull(session.getPrincipal()).getName();
+        String receiverUsername = getUsernameFromPath(Objects.requireNonNull(session.getUri()).getPath());
+        final var sender = userRepository.findByUsername(senderUsername).orElse(null);
 
-            var receiver = userRepository.findByUsername(receiverUsername).filter(UserEntity::isEnabled)
-                    .orElseThrow(() -> new UserNotFoundException(String.format(USER_NOT_FOUND,receiverUsername)));
-
-            MessageDto sendingMessage=messageService.sendMessage(sender,receiver,message.getPayload().toString());
-            if(userSessions.containsKey(receiverUsername))
-                userSessions.get(receiverUsername).get(senderUsername)
-                        .sendMessage(new TextMessage(objectMapper.writeValueAsString(sendingMessage)));
-        } catch (UserNotFoundException e){
-            session.sendMessage(new TextMessage(
-                    objectMapper.writeValueAsString(
-                            ErrorDto.builder()
-                                    .error("Not Found")
-                                    .errorDescription(e.getMessage())
-                                    .build())
-            ));
-            session.close();
+        if (sender == null) {
+            session.close(CloseStatus.POLICY_VIOLATION.withReason(String.format(USER_NOT_FOUND, senderUsername)));
         }
+
+        var receiver = userRepository.findByUsername(receiverUsername).filter(UserEntity::isEnabled).orElse(null);
+
+        if (receiver == null) {
+            session.close(CloseStatus.POLICY_VIOLATION.withReason(String.format(USER_NOT_FOUND, receiverUsername)));
+        }
+        MessageDto sendingMessage = messageService.sendMessage(sender, receiver, message.getPayload().toString());
+        if (userSessions.containsKey(receiverUsername) && (userSessions.get(receiverUsername).containsKey(senderUsername))) {
+            userSessions
+                    .get(receiverUsername)
+                    .get(senderUsername)
+                    .sendMessage(new TextMessage(objectMapper.writeValueAsString(sendingMessage)));
+
+        }
+
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) {
         userSessions.remove(Objects.requireNonNull(session.getPrincipal()).getName());
+        log.info("Session:{} closed with closeStatus: {}", session, closeStatus.toString());
+        log.info(userSessions.toString());
     }
+
     @Override
-    public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
-        session.close();
+    public void handleTransportError(WebSocketSession session, Throwable exception) {
+        log.error("Transport error {} occurred due session {}", exception.getMessage(), session.toString());
     }
+
     @Override
     public boolean supportsPartialMessages() {
         return false;
     }
+
     private String getUsernameFromPath(String path) {
         return path.substring(path.lastIndexOf("/") + 1);
     }

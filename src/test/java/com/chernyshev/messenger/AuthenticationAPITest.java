@@ -29,15 +29,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource("/application-test.yml")
-@Sql(value = {"/create-users-test.sql"},executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-@Sql(value = {"/clear.sql"},executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-public class AuthenticationControllerTest {
+@Sql(value = {"/create-users-test.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(value = {"/clear.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+public class AuthenticationAPITest {
     @Autowired
     private MockMvc mockMvc;
-    private final ObjectMapper objectMapper=new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    public void registerTest() throws Exception{
+    public void registerTest() throws Exception {
 
         mockMvc.perform(
                         post(AuthenticationController.REGISTER)
@@ -60,7 +60,7 @@ public class AuthenticationControllerTest {
     }
 
     @Test
-    public void registerUsernameAlreadyExistTest() throws Exception{
+    public void registerUsernameAlreadyExistTest() throws Exception {
 
         mockMvc.perform(
                         post(AuthenticationController.REGISTER)
@@ -80,12 +80,12 @@ public class AuthenticationControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error", is("Bad Request")))
                 .andExpect(
-                        jsonPath("$.error_description",is(String.format(UserService.USER_EXIST,"test3456")))
+                        jsonPath("$.error_description", is(String.format(UserService.USER_EXIST, "test3456")))
                 );
     }
 
     @Test
-    public void registerEmailAlreadyExistTest() throws Exception{
+    public void registerEmailAlreadyExistTest() throws Exception {
 
         mockMvc.perform(
                         post(AuthenticationController.REGISTER)
@@ -105,22 +105,22 @@ public class AuthenticationControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error", is("Bad Request")))
                 .andExpect(
-                        jsonPath("$.error_description",is(String.format(UserService.EMAIL_EXIST,"test3@gmail.com")))
+                        jsonPath("$.error_description", is(String.format(UserService.EMAIL_EXIST, "test3@gmail.com")))
                 );
     }
 
     @Test
-    public void loginTest() throws Exception{
+    public void loginTest() throws Exception {
         mockMvc.perform(
-                post(AuthenticationController.LOGIN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                LoginDto.builder()
-                                        .username("test1234")
-                                        .password("test1234")
-                                        .build()
+                        post(AuthenticationController.LOGIN)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(
+                                                LoginDto.builder()
+                                                        .username("test1234")
+                                                        .password("test1234")
+                                                        .build()
+                                        )
                                 )
-                        )
                 )
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -129,17 +129,17 @@ public class AuthenticationControllerTest {
     }
 
     @Test
-    public void loginBadCredentialsTest() throws Exception{
+    public void loginBadCredentialsTest() throws Exception {
         mockMvc.perform(
-                post(AuthenticationController.LOGIN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                LoginDto.builder()
-                                        .username("test1234")
-                                        .password("test12345")
-                                        .build()
+                        post(AuthenticationController.LOGIN)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(
+                                                LoginDto.builder()
+                                                        .username("test1234")
+                                                        .password("test12345")
+                                                        .build()
+                                        )
                                 )
-                        )
                 )
                 .andDo(print())
                 .andExpect(status().isUnauthorized())
@@ -148,17 +148,17 @@ public class AuthenticationControllerTest {
     }
 
     @Test
-    public void loginUserNodFoundTest() throws Exception{
+    public void loginUserNodFoundTest() throws Exception {
         mockMvc.perform(
-                post(AuthenticationController.LOGIN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                LoginDto.builder()
-                                        .username("test12345")
-                                        .password("test1234")
-                                        .build()
+                        post(AuthenticationController.LOGIN)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(
+                                                LoginDto.builder()
+                                                        .username("test12345")
+                                                        .password("test1234")
+                                                        .build()
+                                        )
                                 )
-                        )
                 )
                 .andDo(print())
                 .andExpect(status().isUnauthorized())
@@ -167,15 +167,15 @@ public class AuthenticationControllerTest {
     }
 
     @Test
-    public void logoutTest() throws Exception{
+    public void logoutTest() throws Exception {
         MvcResult result = mockMvc.perform(
                 post(AuthenticationController.LOGIN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                LoginDto.builder()
-                                        .username("test1234")
-                                        .password("test1234")
-                                        .build()
+                                        LoginDto.builder()
+                                                .username("test1234")
+                                                .password("test1234")
+                                                .build()
                                 )
                         )
         ).andReturn();
@@ -191,11 +191,11 @@ public class AuthenticationControllerTest {
     }
 
     @Test
-    public void confirmEmailTokenTest() throws Exception{
+    public void confirmEmailTokenTest() throws Exception {
         mockMvc
                 .perform(
                         get(
-                                AuthenticationController.EMAIL_CONFIRMATION+
+                                AuthenticationController.EMAIL_CONFIRMATION +
                                         "?confirmationToken=some_valid_email_token"
                         )
                 )
@@ -206,11 +206,11 @@ public class AuthenticationControllerTest {
     }
 
     @Test
-    public void confirmInvalidEmailTokenTest() throws Exception{
+    public void confirmInvalidEmailTokenTest() throws Exception {
         mockMvc
                 .perform(
                         get(
-                                AuthenticationController.EMAIL_CONFIRMATION+
+                                AuthenticationController.EMAIL_CONFIRMATION +
                                         "?confirmationToken=some_invalid_email_token"
                         )
                 )
@@ -221,17 +221,17 @@ public class AuthenticationControllerTest {
     }
 
     @Test
-    public void refreshTokenTest() throws Exception{
+    public void refreshTokenTest() throws Exception {
         MvcResult result = mockMvc.perform(
-                post(AuthenticationController.LOGIN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                        LoginDto.builder()
-                                                .username("test1234")
-                                                .password("test1234")
-                                                .build()
+                        post(AuthenticationController.LOGIN)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(
+                                                LoginDto.builder()
+                                                        .username("test1234")
+                                                        .password("test1234")
+                                                        .build()
+                                        )
                                 )
-                        )
                 )
                 .andExpect(status().isOk())
                 .andDo(print())
@@ -249,7 +249,7 @@ public class AuthenticationControllerTest {
     }
 
     @Test
-    public void refreshInvalidTokenTest() throws Exception{
+    public void refreshInvalidTokenTest() throws Exception {
         mockMvc.perform(put(AuthenticationController.REFRESH_TOKEN)
                         .header("Authorization",
                                 "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0MTI" +
@@ -259,7 +259,7 @@ public class AuthenticationControllerTest {
                 .andDo(print())
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error", is("Unauthorized")))
-                .andExpect(jsonPath("$.error_description", is(UserService.INVALID_JWT_TOKEN)));
+                .andExpect(jsonPath("$.error_description", is(UserService.INVALID_JWT)));
     }
 
 
