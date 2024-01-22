@@ -22,27 +22,27 @@ import java.util.List;
 @Tag(name = "User")
 public class UserController {
     private final UserService userService;
-    public static final  String USER ="/api/v1/users/{username}";
-    public static final  String USER_CHANGE_PASSWORD ="/api/v1/users/{username}/password-change";
-    public static final String USER_FRIENDS="/api/v1/users/{username}/friends";
+    public static final String USER = "/api/v1/users/{username}";
+    public static final String USER_CHANGE_PASSWORD = "/api/v1/users/{username}/password-change";
+    public static final String USER_FRIENDS = "/api/v1/users/{username}/friends";
 
     @Operation(summary = "Return User Account Information", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    content=@Content(mediaType = "application/json",schema = @Schema(implementation = UserDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDto.class))
             ),
             @ApiResponse(
                     responseCode = "401",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             ),
             @ApiResponse(
                     responseCode = "404",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             )
     })
     @GetMapping(USER)
-    public ResponseEntity<UserDto> getUserInfo(@PathVariable String username){
+    public ResponseEntity<UserDto> getUserInfo(@PathVariable String username) {
         return userService.getUserInfo(username);
     }
 
@@ -50,145 +50,147 @@ public class UserController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    content=@Content(mediaType = "application/json",schema = @Schema(implementation = TokenDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = TokenDto.class))
             ),
             @ApiResponse(
                     responseCode = "400",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             ),
             @ApiResponse(
                     responseCode = "401",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             ),
             @ApiResponse(
                     responseCode = "403",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             )
 
     })
     @PatchMapping(USER)
     public ResponseEntity<TokenDto> changeUserInfo(
-            Principal principal,@PathVariable String username,@RequestBody UserDto userDto
-    ){
-        return userService.changeUserInfo(principal,username,userDto);
+            Principal principal, @PathVariable String username, @RequestBody UserDto userDto
+    ) {
+        return userService.changeUserInfo(principal, username, userDto);
     }
 
     @Operation(summary = "Update User Account Password", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    content=@Content(mediaType = "application/json",schema = @Schema(implementation = ResponseMessageDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = TextMessageDto.class))
             ),
             @ApiResponse(
                     responseCode = "400",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             ),
             @ApiResponse(
                     responseCode = "401",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             ),
             @ApiResponse(
                     responseCode = "403",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             )
 
     })
     @PatchMapping(USER_CHANGE_PASSWORD)
-    public ResponseEntity<ResponseMessageDto> changePassword(
-            Principal principal,@PathVariable String username,@RequestBody PasswordDto request
+    public ResponseEntity<TextMessageDto> changePassword(
+            Principal principal, @PathVariable String username, @RequestBody PasswordDto request
     ) {
-        return userService.changeUserPassword(principal,username,request);
+        return userService.changeUserPassword(principal, username, request);
     }
+
     @Operation(summary = "Delete User Account", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    content=@Content(mediaType = "application/json",schema = @Schema(implementation = RecoverTokenDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = RecoverTokenDto.class))
             ),
             @ApiResponse(
                     responseCode = "401",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             ),
             @ApiResponse(
                     responseCode = "403",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             )
 
     })
     @DeleteMapping(USER)
-    public ResponseEntity<RecoverTokenDto> deleteUser(Principal principal,@PathVariable String username) {
-        return userService.deleteUser(principal,username);
+    public ResponseEntity<RecoverTokenDto> deleteUser(Principal principal, @PathVariable String username) {
+        return userService.deleteUser(principal, username);
     }
+
     @Operation(summary = "Recover User Account", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    content=@Content(mediaType = "application/json",schema = @Schema(implementation = TokenDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = TokenDto.class))
             ),
             @ApiResponse(
                     responseCode = "401",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             ),
             @ApiResponse(
                     responseCode = "403",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             )
 
     })
     @PutMapping(USER)
-    public ResponseEntity<TokenDto> recoverUser(@RequestBody RecoverTokenDto token,@PathVariable String username) {
-        return userService.recoverUser(token,username);
+    public ResponseEntity<TokenDto> recoverUser(@RequestBody RecoverTokenDto token, @PathVariable String username) {
+        return userService.recoverUser(token, username);
     }
 
     @Operation(summary = "Return User Friend List", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    content=@Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = UserDto.class)))
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = UserDto.class)))
             ),
             @ApiResponse(
                     responseCode = "401",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             ),
             @ApiResponse(
                     responseCode = "403",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             )
             ,
             @ApiResponse(
                     responseCode = "404",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             )
 
     })
     @GetMapping(USER_FRIENDS)
-    public ResponseEntity<List<UserDto>> getFriendList(Principal principal, @PathVariable String username){
-        return userService.getFriendList(principal,username);
+    public ResponseEntity<List<UserDto>> getFriendList(Principal principal, @PathVariable String username) {
+        return userService.getFriendList(principal, username);
     }
 
     @Operation(summary = "Send Friend Request", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    content=@Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = ResponseMessageDto.class)))
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = TextMessageDto.class)))
             ),
             @ApiResponse(
                     responseCode = "400",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             ),
             @ApiResponse(
                     responseCode = "401",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             ),
             @ApiResponse(
                     responseCode = "404",
-                    content = @Content(mediaType = "application/json",schema = @Schema(implementation = ErrorDto.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDto.class))
             )
 
     })
     @PostMapping(USER_FRIENDS)
-    public ResponseEntity<ResponseMessageDto> addToFriends(Principal principal, @PathVariable String username){
-        return userService.addFriend(principal,username);
+    public ResponseEntity<TextMessageDto> addToFriends(Principal principal, @PathVariable String username) {
+        return userService.addFriend(principal, username);
     }
 
 }

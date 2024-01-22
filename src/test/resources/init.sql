@@ -19,3 +19,6 @@ set email_token='some_valid_email_token' where username = 'test1234';
 
 insert into friends (id,user1_id,user2_id,status_type) values
 (1,1,3,'APPROVED');
+
+insert into messages(id,sender_id,receiver_id,text)
+values (1,1,2,'Hello test2345');

@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 
-public class ResponseMessageDto {
-    private String message;
+public class TextMessageDto {
+    private String text;
 }

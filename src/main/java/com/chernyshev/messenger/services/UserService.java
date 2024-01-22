@@ -96,7 +96,7 @@ public class UserService {
         return  ResponseEntity.ok(tokenService.getTokenDto(repository.saveAndFlush(user)));
     }
 
-    public ResponseEntity<ResponseMessageDto> signOut(HttpServletRequest request){
+    public ResponseEntity<TextMessageDto> signOut(HttpServletRequest request){
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         final String jwt=authHeader.replaceAll("^Bearer ","");
         var storedToken=tokenRepository.findByToken(jwt).orElse(null);
@@ -105,15 +105,15 @@ public class UserService {
         storedToken.setRevoked(true);
         tokenRepository.saveAndFlush(storedToken);
         SecurityContextHolder.clearContext();
-        return ResponseEntity.ok().body(ResponseMessageDto.builder().message(LOGOUT_SUCCESS).build());
+        return ResponseEntity.ok().body(TextMessageDto.builder().text(LOGOUT_SUCCESS).build());
     }
 
-    public ResponseEntity<ResponseMessageDto> emailConfirm(String token) throws InvalidEmailTokenException {
+    public ResponseEntity<TextMessageDto> emailConfirm(String token) throws InvalidEmailTokenException {
         var user = repository.findByEmailToken(token)
                 .orElseThrow(()->new InvalidEmailTokenException(INVALID_CONFIRM_TOKEN));
         user.setEmailToken(null);
         repository.saveAndFlush(user);
-        return ResponseEntity.ok().body(ResponseMessageDto.builder().message(EMAIL_CONFIRM_SUCCESS).build());
+        return ResponseEntity.ok().body(TextMessageDto.builder().text(EMAIL_CONFIRM_SUCCESS).build());
     }
 
     public ResponseEntity<TokenDto> tokenRefresh(HttpServletRequest request)
@@ -214,7 +214,7 @@ public class UserService {
 
     }
 
-    public ResponseEntity<ResponseMessageDto> changeUserPassword(Principal principal, String username, PasswordDto request)
+    public ResponseEntity<TextMessageDto> changeUserPassword(Principal principal, String username, PasswordDto request)
             throws NoPermissionException, PasswordsNotMatchException{
         if(!username.equals(principal.getName()))
             throw new NoPermissionException(NO_PERMISSION_MESSAGE);
@@ -230,7 +230,7 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         repository.saveAndFlush(user);
-        return ResponseEntity.ok().body(ResponseMessageDto.builder().message(PASSWORD_HAS_CHANGED).build());
+        return ResponseEntity.ok().body(TextMessageDto.builder().text(PASSWORD_HAS_CHANGED).build());
     }
 
     public ResponseEntity<RecoverTokenDto> deleteUser(Principal principal,String username)
@@ -281,7 +281,7 @@ public class UserService {
         return ResponseEntity.ok().body(userDtoList);
     }
 
-    public ResponseEntity<ResponseMessageDto> addFriend(Principal principal, String username)
+    public ResponseEntity<TextMessageDto> addFriend(Principal principal, String username)
             throws FriendRequestException,UserNotFoundException{
         if(principal.getName().equals(username))
             throw new FriendRequestException(SELF_FRIEND_REQUEST);
@@ -311,7 +311,7 @@ public class UserService {
                            );
                        }
                 );
-        return ResponseEntity.ok().body(ResponseMessageDto.builder().message(FRIEND_REQUEST_SUCCESS_SEND).build());
+        return ResponseEntity.ok().body(TextMessageDto.builder().text(FRIEND_REQUEST_SUCCESS_SEND).build());
     }
 
     public UserDto convertToUserDto(UserEntity user){

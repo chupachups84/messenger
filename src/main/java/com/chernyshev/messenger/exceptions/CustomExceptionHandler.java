@@ -35,7 +35,8 @@ public class CustomExceptionHandler {
             EmailAlreadyExistException.class,
             FriendRequestException.class,
             PasswordsNotMatchException.class,
-            UsernameAlreadyExistException.class
+            UsernameAlreadyExistException.class,
+            MessageBadRequestException.class
     })
     public ResponseEntity<ErrorDto> handleBadRequestException(Exception ex){
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(

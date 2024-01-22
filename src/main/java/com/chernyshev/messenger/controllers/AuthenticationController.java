@@ -61,7 +61,7 @@ public class AuthenticationController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    content=@Content(mediaType = "application/json",schema = @Schema(implementation = ResponseMessageDto.class))
+                    content=@Content(mediaType = "application/json",schema = @Schema(implementation = TextMessageDto.class))
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -69,7 +69,7 @@ public class AuthenticationController {
             )
     })
     @PostMapping(LOGOUT)
-    public ResponseEntity<ResponseMessageDto> signOut(HttpServletRequest request) {
+    public ResponseEntity<TextMessageDto> signOut(HttpServletRequest request) {
         return userService.signOut(request);
     }
 
@@ -77,7 +77,7 @@ public class AuthenticationController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    content=@Content(mediaType = "application/json",schema = @Schema(implementation = ResponseMessageDto.class))
+                    content=@Content(mediaType = "application/json",schema = @Schema(implementation = TextMessageDto.class))
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -85,7 +85,7 @@ public class AuthenticationController {
             )
     })
     @GetMapping(EMAIL_CONFIRMATION)
-    public ResponseEntity<ResponseMessageDto> confirm(@RequestParam String confirmationToken) {
+    public ResponseEntity<TextMessageDto> confirm(@RequestParam String confirmationToken) {
         return userService.emailConfirm(confirmationToken);
     }
 
@@ -93,7 +93,7 @@ public class AuthenticationController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    content=@Content(mediaType = "application/json",schema = @Schema(implementation = ResponseMessageDto.class))
+                    content=@Content(mediaType = "application/json",schema = @Schema(implementation = TextMessageDto.class))
             ),
             @ApiResponse(
                     responseCode = "401",
