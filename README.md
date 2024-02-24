@@ -11,6 +11,7 @@ ___
 * Spring Data JPA
 * Spring WebSocket API
 * PostgreSQL
+* Docker 3.8
 * JWT
 * Open API
 ___
