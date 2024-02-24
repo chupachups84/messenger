@@ -7,7 +7,7 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/messenger-test
+    url: jdbc:postgresql://localhost:5433/messenger-test
     username: postgres
     password: postgres
   mail:
