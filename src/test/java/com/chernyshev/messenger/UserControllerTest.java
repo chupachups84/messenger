@@ -17,7 +17,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithUserDetails;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -34,10 +34,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource("/application-test.yml")
+@ActiveProfiles("test")
 @Sql(value = {"/init.sql"},executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/clear.sql"},executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-public class UserAPITest {
+public class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper=new ObjectMapper();
@@ -211,7 +211,7 @@ public class UserAPITest {
                 )
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is(UserService.PASSWORD_HAS_CHANGED)));
+                .andExpect(jsonPath("$.text", is(UserService.PASSWORD_HAS_CHANGED)));
         mockMvc.perform(
                 post(AuthenticationController.LOGIN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -454,7 +454,7 @@ public class UserAPITest {
         mockMvc.perform(post(UserController.USER_FRIENDS.replaceAll("\\{username\\}","test2345")))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message",is(UserService.FRIEND_REQUEST_SUCCESS_SEND)));
+                .andExpect(jsonPath("$.text",is(UserService.FRIEND_REQUEST_SUCCESS_SEND)));
     }
 
     @Test
@@ -463,7 +463,7 @@ public class UserAPITest {
         mockMvc.perform(post(UserController.USER_FRIENDS.replaceAll("\\{username\\}","test2345")))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message",is(UserService.FRIEND_REQUEST_SUCCESS_SEND)));
+                .andExpect(jsonPath("$.text",is(UserService.FRIEND_REQUEST_SUCCESS_SEND)));
         mockMvc.perform(post(UserController.USER_FRIENDS.replaceAll("\\{username\\}","test2345")))
                 .andDo(print())
                 .andExpect(status().isBadRequest())

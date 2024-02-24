@@ -40,7 +40,7 @@ public class MessageService {
 
     }
 
-    @Transactional()
+    @Transactional
     public String sendMessage(String username1, String username2, TextMessageDto text) {
         var sender = userRepository.findByUsername(username1).orElseThrow(
                 () -> new UserNotFoundException(UserService.NOT_FOUND_MESSAGE)

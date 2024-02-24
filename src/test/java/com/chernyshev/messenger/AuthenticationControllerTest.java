@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -28,10 +28,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource("/application-test.yml")
+@ActiveProfiles("test")
 @Sql(value = {"/init.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/clear.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-public class AuthenticationAPITest {
+public class AuthenticationControllerTest {
     @Autowired
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -187,7 +187,7 @@ public class AuthenticationAPITest {
                 )
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is(UserService.LOGOUT_SUCCESS)));
+                .andExpect(jsonPath("$.text", is(UserService.LOGOUT_SUCCESS)));
     }
 
     @Test
@@ -201,7 +201,7 @@ public class AuthenticationAPITest {
                 )
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is(UserService.EMAIL_CONFIRM_SUCCESS)));
+                .andExpect(jsonPath("$.text", is(UserService.EMAIL_CONFIRM_SUCCESS)));
 
     }
 
@@ -215,7 +215,7 @@ public class AuthenticationAPITest {
                         )
                 )
                 .andDo(print())
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error", notNullValue()))
                 .andExpect(jsonPath("$.error_description", is(UserService.INVALID_CONFIRM_TOKEN)));
     }
