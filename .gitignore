@@ -33,6 +33,5 @@ build/
 .vscode/
 
 ### Maven ###
-.mvn
 /.mvn/
 /.mvn/wrapper/
