@@ -9,7 +9,6 @@ ___
 * Spring Security
 * Spring Mail Server
 * Spring Data JPA
-* Spring WebSocket API
 * PostgreSQL
 * Docker 3.8
 * JWT
