@@ -89,6 +89,7 @@ public class MessageControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.text", is(MessageService.SUCCESS))
                 );
+        System.out.println(500);
     }
 
     @Test

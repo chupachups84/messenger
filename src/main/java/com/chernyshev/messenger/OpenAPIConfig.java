@@ -12,10 +12,9 @@ import io.swagger.v3.oas.annotations.servers.Server;
         info = @Info(
                 contact = @Contact(
                         name = "Павел",
-                        email = "pasha7w@gmail.com",
-                        url="https://github.com/pp848484"
+                        email = "pasha7w@gmail.com"
                 ),
-                description = "OpenApi документация для тестового задания РЭЛЭКС",
+                description = "OpenApi документация для messenger",
                 title = "OpenApi спецификация - Павел Чернышев",
                 version = "1.0"
         ),
